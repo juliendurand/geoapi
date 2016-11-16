@@ -109,6 +109,12 @@ def index_departement(departement, city_file, street_file, number_file):
             number_key = hash(street_id + ':' + numero + ':' + rep)
             if number_key not in numbers:
                 numbers.add(number_key)
+                try:
+                    nb = int(numero)
+                    l = float(lon)
+                    ll = float(lat)
+                except:
+                    print(numero, lon, lat)
                 number_line = ','.join((street_id, numero, rep, lon, lat,))
                 number_file.write(number_line + '\n')
             else:
@@ -188,13 +194,57 @@ def get(code_insee, query):
 
 #with open('index/cities.csv', encoding='utf-8') as fp:
 #    cities = np.loadtxt(fp, dtype=[('code_insee', 'str_'), ('code_post', 'str_'), ('nom_commune', 'str_')], delimiter=',')
-with open('index/cities.csv') as fp:
+with open('index/numbers.csv') as fp:
     maxlen = 0
+    maxnb = 0
+    repset = set()
     for line in fp:
-        maxlen = max(maxlen, len(line[:-1].split(',')[2]))
-    print("max: ", maxlen)
-print(np.dtype([('street_id', 'a5'), ('code_insee', 'a5'), ('nom_voie', 'U32')]).itemsize)
-streets = np.loadtxt('index/streets.csv', dtype=[('street_id', 'a5'), ('code_insee', 'a5'), ('nom_voie', 'str_')], delimiter=',')
-print(streets.nbytes)
-# result = get('44109', '40, chemin de la conardière')
+        values = line[:-1].split(',')
+        maxnb = max(maxnb, len(values[1]))
+        maxlen = max(maxlen, len(values[2]))
+        repset.add(values[2].upper())
+
+    print("maxrep: ", maxlen, " max number: ", maxnb)
+    print(repset, len(repset))
+
+#
+# max city name length = 45 unicode /!\ utf-8
+#
+city_dtype = np.dtype([('code_insee', 'str_'),
+                      ('code_post', 'str_'),
+                      ('nom_commune', 'a45')])
+
+street_dtype = np.dtype([('street_id', 'a5'),
+                        ('code_insee', 'a5'),
+                        ('nom_voie', 'a32')])
+
+number_dtype = np.dtype([('street_id', 'a5'),
+                        ('number', 'int16'),
+                        ('rep', 'a3'),
+                        ('lon', 'float32'),
+                        ('lat', 'float32')])
+
+#streets = np.loadtxt('index/streets.csv', dtype=street_dtype, delimiter=',')  # 76MB
+#numbers = np.loadtxt('index/numbers.csv', dtype=number_dtype, delimiter=',')
+#print(number_dtype.itemsize, numbers.size, numbers.nbytes)
+
+## result = get('44109', '40, chemin de la conardière')
 # print (result)
+
+
+import falcon
+
+
+class SearchResource:
+
+    def on_get(self, req, resp):
+        """Handles GET requests"""
+        quote = {
+            'quote': 'I\'ve always been more interested in the future than in the past.',
+            'author': 'Grace Hopper'
+        }
+
+        resp.body = json.dumps(quote)
+
+api = falcon.API()
+api.add_route('/search', SearchResource())
