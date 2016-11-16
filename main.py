@@ -1,10 +1,12 @@
 from collections import namedtuple
 
-import csv
 import difflib
+import itertools
 import json
 import os
 import re
+
+import numpy as np
 
 data_path = './data/ban'
 index_path = './index/'
@@ -66,38 +68,54 @@ def street_to_json(street):
     }
     return json.dumps(data)
 
-db = {}
+street_id_generator = itertools.count()
 
 
-def index_departement(departement):
+def index_departement(departement, city_file, street_file, number_file):
     file = os.path.join(data_path, filename_template % departement)
     if not os.path.exists(file):
         print('ERROR for departement %s : file not found' % departement)
         return
     print('Indexing : %s' % file)
-    csv_reader = csv.reader(open(file, 'r'), delimiter=';')
-    next(csv_reader, None)
-    for address in map(Address._make, csv_reader):
-        code_insee = address.code_insee
-        code_post = address.code_post
-        nom_commune = address.nom_commune
-        if not db.get(code_insee):
-            db[code_insee] = City(code_insee, code_post, nom_commune, {})
-        city = db[code_insee]
-        streets = city.streets
+    cities = set()
+    streets = {}
+    numbers = set()
+    duplicates = 0
+    with open(file, 'r') as in_file:
+        next(in_file, None)  # skip header (first line)
+        for line in in_file:
+            values = line[:-1].replace('""', '').split(';')
 
-        nom_voie = address.nom_voie
-        if not streets.get(nom_voie):
-            streets[nom_voie] = Street(nom_voie, {})
-        street = streets[nom_voie]
-        numbers = street.numbers
+            numero = values[3]
+            rep = values[4]
+            code_insee = values[5]
+            code_post = values[6]
+            nom_afnor = values[9]
+            lon = values[13]
+            lat = values[14]
+            nom_commune = values[15]
 
-        numero = address.numero
-        rep = address.rep
-        lon = address.lon
-        lat = address.lat
-        if not numbers.get(numero+rep):
-            numbers[numero+rep] = Number(numero, rep, lon, lat)
+            if code_insee not in cities:
+                cities.add(code_insee)
+                city_line = ','.join((code_insee, code_post, nom_commune,))
+                city_file.write(city_line + '\n')
+            street_key = hash(code_insee + ':' + nom_afnor)
+            if street_key not in streets:
+                street_id = str(next(street_id_generator))
+                streets[street_key] = street_id
+                street_line = ','.join((street_id, code_insee, nom_afnor,))
+                street_file.write(street_line + '\n')
+            street_id = streets[street_key]
+            number_key = hash(street_id + ':' + numero + ':' + rep)
+            if number_key not in numbers:
+                numbers.add(number_key)
+                number_line = ','.join((street_id, numero, rep, lon, lat,))
+                number_file.write(number_line + '\n')
+            else:
+                duplicates += 1
+                #print("Duplicate number : should not happen !")
+        print("streets", len(streets))
+        print("duplicates", duplicates)
 
 
 def save_db():
@@ -108,12 +126,14 @@ def save_db():
             for street in city.streets:
 
                 out.write(street_to_json(city.streets[street]) + '\n')
-    db = {}
 
 
 def index():
-    for departement in departements:
-        index_departement(departement)
+    with open('index/cities.csv', 'w') as city_file, \
+            open('index/streets.csv', 'w') as street_file, \
+            open('index/numbers.csv', 'w') as number_file:
+        for departement in departements:
+            index_departement(departement, city_file, street_file, number_file)
         # save_db()
 
 
@@ -122,7 +142,7 @@ def score_street(query, street):
         set(street['nom'].lower().split())
     return len(intersection)
     #return difflib.SequenceMatcher(a=query.lower(),
-    #                               b=street['nom'].lower()).ratio()
+    #                               b=street['nom'].lower()).   ratio()
 
 
 def get_number(query):
@@ -164,8 +184,17 @@ def get(code_insee, query):
         'lon': number_match['lon'] if number_match else "",
         }
 
+#index()
 
-index()
-
+#with open('index/cities.csv', encoding='utf-8') as fp:
+#    cities = np.loadtxt(fp, dtype=[('code_insee', 'str_'), ('code_post', 'str_'), ('nom_commune', 'str_')], delimiter=',')
+with open('index/cities.csv') as fp:
+    maxlen = 0
+    for line in fp:
+        maxlen = max(maxlen, len(line[:-1].split(',')[2]))
+    print("max: ", maxlen)
+print(np.dtype([('street_id', 'a5'), ('code_insee', 'a5'), ('nom_voie', 'U32')]).itemsize)
+streets = np.loadtxt('index/streets.csv', dtype=[('street_id', 'a5'), ('code_insee', 'a5'), ('nom_voie', 'str_')], delimiter=',')
+print(streets.nbytes)
 # result = get('44109', '40, chemin de la conardière')
 # print (result)
