@@ -3,14 +3,22 @@ from collections import namedtuple
 import difflib
 import itertools
 import json
+import mmap
 import os
 import re
 
 import numpy as np
 
+SEPARATOR = ','
+DEGREE_TO_INT_SCALE = 10000000
+
 data_path = './data/ban'
 index_path = './index/'
 filename_template = 'BAN_licence_gratuite_repartage_%s.csv'
+
+city_db_path = 'index/cities.csv'
+street_db_path = 'index/streets.csv'
+number_db_path = 'index/numbers.csv'
 
 # bug : missing departement 62
 departements = (
@@ -53,6 +61,40 @@ Street = namedtuple('Street', ('nom_voie', 'numbers', ))
 Number = namedtuple('Number', ('numero', 'rep', 'lon', 'lat', ))
 
 
+city_dtype = np.dtype([('code_insee', 'a5'),
+                      ('code_post', 'a5'),
+                      ('nom_commune', 'a45')])
+
+street_dtype = np.dtype([('street_id', 'a5'),
+                        ('code_insee', 'a5'),
+                        ('nom_voie', 'a32')])
+
+number_dtype = np.dtype([('street_id', 'a5'),
+                        ('number', 'int16'),
+                        ('rep', 'a3'),
+                        ('lon', 'int32'),
+                        ('lat', 'int32')])
+
+
+def safe_cast(val, to_type, default=None):
+    try:
+        return to_type(val)
+    except (ValueError, TypeError):
+        return default or to_type()
+
+
+def degree_to_int(angle):
+    return int(angle*DEGREE_TO_INT_SCALE) if -180 < angle < 180 else 0  # FIXME
+
+
+def int_to_degree(value):
+    return float(value)/DEGREE_TO_INT_SCALE
+
+
+def b_to_mb(bytes):
+    return float(bytes)/1024**2
+
+
 def get_code_insee_filename(code_insee):
     root = code_insee[:2]
     folder = os.path.join(index_path, root)
@@ -91,9 +133,9 @@ def index_departement(departement, city_file, street_file, number_file):
             code_insee = values[5]
             code_post = values[6]
             nom_afnor = values[9]
+            nom_commune = values[10]
             lon = values[13]
             lat = values[14]
-            nom_commune = values[15]
 
             if code_insee not in cities:
                 cities.add(code_insee)
@@ -124,23 +166,55 @@ def index_departement(departement, city_file, street_file, number_file):
         print("duplicates", duplicates)
 
 
-def save_db():
-    for code_insee in db:
-        city = db[code_insee]
-        out_filename = get_code_insee_filename(code_insee)
-        with open(out_filename, 'w') as out:
-            for street in city.streets:
+def count_file_lines(filename):
+    lines = 0
+    with open(filename, "r+") as f:
+        buf = mmap.mmap(f.fileno(), 0)
+        readline = buf.readline
+        while readline():
+            lines += 1
+    return lines
 
-                out.write(street_to_json(city.streets[street]) + '\n')
+
+def city_factory(line):
+    code_insee, code_post, nom_commune = line[:-1].split(SEPARATOR)
+    return (code_insee, code_post, nom_commune,)
+
+
+def street_factory(line):
+    street_id, code_insee, nom_voie = line[:-1].split(SEPARATOR)
+    street_id = int(street_id)
+    return (street_id, code_insee, nom_voie,)
+
+
+def number_factory(line):
+    street_id, numero, rep, lon, lat = line[:-1].split(SEPARATOR)
+    street_id = int(street_id)
+    numero = safe_cast(numero, int, -1)  # fixme
+    if numero > 2**16 - 1:
+        raise "Error : numero overflows 16bits"
+    lon = degree_to_int(float(lon))
+    lat = degree_to_int(float(lat))
+    return (street_id, numero, rep, lon, lat,)
+
+
+def create_np_table(filename, dtype, factory):
+    nb_lines = count_file_lines(filename)
+    table = np.zeros(nb_lines, dtype=dtype)
+    with open(filename, "r+") as f:
+        i = 0
+        for line in f:
+            table[i] = factory(line)
+            i += 1
+    return table
 
 
 def index():
-    with open('index/cities.csv', 'w') as city_file, \
-            open('index/streets.csv', 'w') as street_file, \
-            open('index/numbers.csv', 'w') as number_file:
+    with open(city_db_path, 'w') as city_file, \
+            open(street_db_path, 'w') as street_file, \
+            open(number_db_path, 'w') as number_file:
         for departement in departements:
             index_departement(departement, city_file, street_file, number_file)
-        # save_db()
 
 
 def score_street(query, street):
@@ -190,61 +264,55 @@ def get(code_insee, query):
         'lon': number_match['lon'] if number_match else "",
         }
 
-#index()
+#print(count_file_lines(city_db_path))
+#print(count_file_lines(street_db_path))
+#print(count_file_lines(number_db_path))
+
+#index(); exit()
 
 #with open('index/cities.csv', encoding='utf-8') as fp:
 #    cities = np.loadtxt(fp, dtype=[('code_insee', 'str_'), ('code_post', 'str_'), ('nom_commune', 'str_')], delimiter=',')
-with open('index/numbers.csv') as fp:
-    maxlen = 0
-    maxnb = 0
-    repset = set()
-    for line in fp:
-        values = line[:-1].split(',')
-        maxnb = max(maxnb, len(values[1]))
-        maxlen = max(maxlen, len(values[2]))
-        repset.add(values[2].upper())
 
-    print("maxrep: ", maxlen, " max number: ", maxnb)
-    print(repset, len(repset))
+#with open('index/numbers.csv') as fp:
+#    maxlen = 0
+#    maxnb = 0
+#    repset = set()
+#    for line in fp:
+#        values = line[:-1].split(',')
+#        maxnb = max(maxnb, len(values[1]))
+#        maxlen = max(maxlen, len(values[2]))
+#        repset.add(values[2].upper())
+#
+#    print("maxrep: ", maxlen, " max number: ", maxnb)
+#    print(repset, len(repset))
 
 #
 # max city name length = 45 unicode /!\ utf-8
 #
-city_dtype = np.dtype([('code_insee', 'str_'),
-                      ('code_post', 'str_'),
-                      ('nom_commune', 'a45')])
-
-street_dtype = np.dtype([('street_id', 'a5'),
-                        ('code_insee', 'a5'),
-                        ('nom_voie', 'a32')])
-
-number_dtype = np.dtype([('street_id', 'a5'),
-                        ('number', 'int16'),
-                        ('rep', 'a3'),
-                        ('lon', 'float32'),
-                        ('lat', 'float32')])
-
-#streets = np.loadtxt('index/streets.csv', dtype=street_dtype, delimiter=',')  # 76MB
-#numbers = np.loadtxt('index/numbers.csv', dtype=number_dtype, delimiter=',')
-#print(number_dtype.itemsize, numbers.size, numbers.nbytes)
-
-## result = get('44109', '40, chemin de la conardière')
-# print (result)
 
 
-import falcon
+def load_db():
+    cities = create_np_table(city_db_path, city_dtype, city_factory)
+    print('cities: ', '%.3f' % b_to_mb(cities.nbytes), 'MB')
 
+    streets = create_np_table(street_db_path, street_dtype, street_factory)
+    print('streets: ', '%.3f' % b_to_mb(streets.nbytes), 'MB')
 
-class SearchResource:
+    numbers = create_np_table(number_db_path, number_dtype, number_factory)
+    print('numbers: ', '%.3f' % b_to_mb(numbers.nbytes), 'MB')
 
-    def on_get(self, req, resp):
-        """Handles GET requests"""
-        quote = {
-            'quote': 'I\'ve always been more interested in the future than in the past.',
-            'author': 'Grace Hopper'
-        }
+    return {
+        'cities': cities,
+        'streets': streets,
+        'numbers': numbers
+    }
 
-        resp.body = json.dumps(quote)
+print('main.py reloaded')
 
-api = falcon.API()
-api.add_route('/search', SearchResource())
+if __name__ == '__main__':
+    db = load_db()
+    db['streets'].sort(order='code_insee')
+    print('sorted streets')
+
+    db['numbers'].sort(order='street_id')
+    print('sorted numbers')
