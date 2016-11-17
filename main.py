@@ -247,8 +247,8 @@ def index():
             index_departement(departement, city_file, street_file, number_file,
                               repetitions)
 
-    indexed_repetition = {v: k for k, v in repetitions.items()}
-    repetition_file.write(json.dumps(indexed_repetition))
+        indexed_repetition = {v: k for k, v in repetitions.items()}
+        repetition_file.write(json.dumps(indexed_repetition))
 
     create_np_table(city_csv_path, city_dtype, city_factory,
                     city_db_path, sort='code_insee')
