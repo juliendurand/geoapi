@@ -119,12 +119,11 @@ def index_departement(departement, city_file, street_file, number_file):
     streets = {}
     numbers = set()
 
-    nb_exceptions = 0
-
     with open(file, 'r') as in_file:
         next(in_file, None)  # skip header (first line)
         street_id_generator = itertools.count()
         duplicates = 0
+        nb_exceptions = 0
         for line in in_file:
             values = line[:-1].replace('""', '').split(';')
             try:
@@ -182,8 +181,10 @@ def index_departement(departement, city_file, street_file, number_file):
             except Exception as e:
                 nb_exceptions += 1
                 print(e)
+    if duplicates:
         print("duplicates: ", duplicates)
-    print("exceptions: ", nb_exceptions)
+    if nb_exceptions:
+        print("exceptions: ", nb_exceptions)
 
 
 def city_factory(line):
@@ -219,10 +220,13 @@ def create_np_table(in_filename, dtype, factory, out_filename, sort=None):
         print('sorted %s on %s' % (out_filename, sort))
     table.flush()
     print('written ', out_filename, ' : %.3f' % b_to_mb(table.nbytes), 'MB')
+    os.remove(in_filename)
     return table
 
 
 def index():
+    if not os.path.exists('index'):
+        os.mkdir('index')
     with open(city_csv_path, 'w') as city_file, \
             open(street_csv_path, 'w') as street_file, \
             open(number_csv_path, 'w') as number_file:
