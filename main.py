@@ -193,6 +193,7 @@ def index_departement(departement, city_file, street_file, number_file,
         print("duplicates: ", duplicates)
     if nb_exceptions:
         print("exceptions: ", nb_exceptions)
+    return nb_exceptions
 
 
 def city_factory(line):
@@ -237,6 +238,7 @@ def index():
         os.mkdir('index')
 
     repetitions = {}
+    nb_exceptions = 0
 
     with open(city_csv_path, 'w') as city_file, \
             open(street_csv_path, 'w') as street_file, \
@@ -244,12 +246,16 @@ def index():
             open(repetition_ref_path, 'w') as repetition_file:
 
         for departement in departements:
-            index_departement(departement, city_file, street_file, number_file,
-                              repetitions)
+            nb_exceptions += index_departement(departement, city_file,
+                                               street_file, number_file,
+                                               repetitions)
+
+        print('TOTAL number of skipped lines : ', nb_exceptions)
 
         indexed_repetition = {int(v): k for k, v in repetitions.items()}
         indexed_repetition = sorted(indexed_repetition)
         repetition_file.write(json.dumps(indexed_repetition))
+        print('saved repetition.json reference file')
 
     create_np_table(city_csv_path, city_dtype, city_factory,
                     city_db_path, sort='code_insee')
