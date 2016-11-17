@@ -1,4 +1,5 @@
 import itertools
+import json
 import mmap
 import os
 
@@ -18,6 +19,8 @@ number_csv_path = 'index/numbers.csv'
 city_db_path = 'index/cities.dat'
 street_db_path = 'index/streets.dat'
 number_db_path = 'index/numbers.dat'
+
+repetition_ref_path = 'index/repetitions.csv'
 
 departements = (
     '01', '02', '03', '04', '05', '06', '07', '08', '09', '10',
@@ -65,7 +68,7 @@ street_dtype = np.dtype([('street_id', 'int32'),
 
 number_dtype = np.dtype([('street_id', 'int32'),
                         ('number', 'int16'),
-                        ('rep', 'a3'),
+                        ('rep', 'int8'),
                         ('lon', 'int32'),
                         ('lat', 'int32')])
 
@@ -107,7 +110,8 @@ def count_file_lines(filename):
 #
 
 
-def index_departement(departement, city_file, street_file, number_file):
+def index_departement(departement, city_file, street_file, number_file,
+                      repetitions):
     file = os.path.join(data_path, filename_template % departement)
     if not os.path.exists(file):
         print('ERROR for departement %s : file not found' % departement)
@@ -122,6 +126,7 @@ def index_departement(departement, city_file, street_file, number_file):
     with open(file, 'r') as in_file:
         next(in_file, None)  # skip header (first line)
         street_id_generator = itertools.count()
+        repetition_id_generator = itertools.count()
         duplicates = 0
         nb_exceptions = 0
         for line in in_file:
@@ -173,6 +178,10 @@ def index_departement(departement, city_file, street_file, number_file):
 
                 number_key = hash(street_id + ':' + numero + ':' + rep)
                 if number_key not in numbers:
+                    if rep not in repetitions:
+                        repetition_key = str(next(repetition_id_generator))
+                        repetitions[rep] = repetition_key
+                    rep = repetitions[rep]
                     numbers.add(number_key)
                     number_line = ','.join((street_id, numero, rep, lon, lat,))
                     number_file.write(number_line + '\n')
@@ -227,11 +236,20 @@ def create_np_table(in_filename, dtype, factory, out_filename, sort=None):
 def index():
     if not os.path.exists('index'):
         os.mkdir('index')
+
+    repetitions = {}
+
     with open(city_csv_path, 'w') as city_file, \
             open(street_csv_path, 'w') as street_file, \
-            open(number_csv_path, 'w') as number_file:
+            open(number_csv_path, 'w') as number_file, \
+            open(repetition_ref_path, 'w') as repetition_file:
+
         for departement in departements:
-            index_departement(departement, city_file, street_file, number_file)
+            index_departement(departement, city_file, street_file, number_file,
+                              repetitions)
+
+    indexed_repetition = {v: k for k, v in repetitions.items()}
+    repetition_file.write(json.dumps(indexed_repetition))
 
     create_np_table(city_csv_path, city_dtype, city_factory,
                     city_db_path, sort='code_insee')
@@ -241,6 +259,7 @@ def index():
 
     create_np_table(number_csv_path, number_dtype, number_factory,
                     number_db_path, sort='street_id')
+
 
 #
 # Load
