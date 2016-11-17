@@ -20,7 +20,7 @@ city_db_path = 'index/cities.dat'
 street_db_path = 'index/streets.dat'
 number_db_path = 'index/numbers.dat'
 
-repetition_ref_path = 'index/repetitions.csv'
+repetition_ref_path = 'index/repetitions.json'
 
 departements = (
     '01', '02', '03', '04', '05', '06', '07', '08', '09', '10',
@@ -247,7 +247,8 @@ def index():
             index_departement(departement, city_file, street_file, number_file,
                               repetitions)
 
-        indexed_repetition = {v: k for k, v in repetitions.items()}
+        indexed_repetition = {int(v): k for k, v in repetitions.items()}
+        indexed_repetition = sorted(indexed_repetition)
         repetition_file.write(json.dumps(indexed_repetition))
 
     create_np_table(city_csv_path, city_dtype, city_factory,
