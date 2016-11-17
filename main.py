@@ -137,7 +137,6 @@ def index_departement(departement, city_file, street_file, number_file,
                     raise Exception('Invalid numero : "%s"' % numero)
 
                 rep = values[4]
-                # TODO check if valid
 
                 code_insee = values[5]
                 if len(code_insee) > 5:
@@ -156,11 +155,11 @@ def index_departement(departement, city_file, street_file, number_file,
                     raise Exception('Invalid nom_commune : "%s"' % nom_commune)
 
                 lon = values[13]
-                if not float(lon):
+                if not -180 < float(lon) < 180:
                     raise Exception('Invalid lon : "%s"' % lon)
 
                 lat = values[14]
-                if not float(lat):
+                if not -90 < float(lat) < 90:
                     raise Exception('Invalid lat : "%s"' % lat)
 
                 if code_insee not in cities:
