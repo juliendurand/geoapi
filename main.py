@@ -1,12 +1,13 @@
 import itertools
 import json
-import mmap
 import os
 
 import numpy as np
 
+import reverse
+import utils
+
 SEPARATOR = ','
-DEGREE_TO_INT_SCALE = 10000000
 
 data_path = './data/ban'
 index_path = './index/'
@@ -55,9 +56,6 @@ Address = (
     'nom_commune',
 )
 
-#
-# max city name length = 45 unicode /!\ utf-8
-#
 city_dtype = np.dtype([('code_insee', 'a5'),
                       ('code_post', 'a5'),
                       ('nom_commune', 'a45')])
@@ -66,44 +64,13 @@ street_dtype = np.dtype([('street_id', 'int32'),
                         ('code_insee', 'a5'),
                         ('nom_voie', 'a32')])
 
+location_dtype = np.dtype([('lon', 'int32'),
+                           ('lat', 'int32')])
+
 number_dtype = np.dtype([('street_id', 'int32'),
                         ('number', 'int16'),
                         ('rep', 'int8'),
-                        ('lon', 'int32'),
-                        ('lat', 'int32')])
-
-#
-# Utilities
-#
-
-
-def safe_cast(val, to_type, default=None):
-    try:
-        return to_type(val)
-    except (ValueError, TypeError):
-        return default or to_type()
-
-
-def degree_to_int(angle):
-    return int(angle*DEGREE_TO_INT_SCALE) if -180 < angle < 180 else 0  # FIXME
-
-
-def int_to_degree(value):
-    return float(value)/DEGREE_TO_INT_SCALE
-
-
-def b_to_mb(bytes):
-    return float(bytes)/1024**2
-
-
-def count_file_lines(filename):
-    lines = 0
-    with open(filename, "r+") as f:
-        buf = mmap.mmap(f.fileno(), 0)
-        readline = buf.readline
-        while readline():
-            lines += 1
-    return lines
+                        ('location', location_dtype)])
 
 #
 # Index
@@ -111,11 +78,12 @@ def count_file_lines(filename):
 
 
 def index_departement(departement, city_file, street_file, number_file,
+                      street_id_generator, repetition_id_generator,
                       repetitions):
     file = os.path.join(data_path, filename_template % departement)
     if not os.path.exists(file):
         print('ERROR for departement %s : file not found' % departement)
-        return
+        return 1  # FIXME considered as skipping a line only
 
     print('Indexing : %s' % file)
 
@@ -125,8 +93,6 @@ def index_departement(departement, city_file, street_file, number_file,
 
     with open(file, 'r') as in_file:
         next(in_file, None)  # skip header (first line)
-        street_id_generator = itertools.count()
-        repetition_id_generator = itertools.count()
         duplicates = 0
         nb_exceptions = 0
         for line in in_file:
@@ -189,10 +155,10 @@ def index_departement(departement, city_file, street_file, number_file,
             except Exception as e:
                 nb_exceptions += 1
                 print(e)
-    if duplicates:
-        print("duplicates: ", duplicates)
-    if nb_exceptions:
-        print("exceptions: ", nb_exceptions)
+        if duplicates:
+            print("duplicates: ", duplicates)
+        if nb_exceptions:
+            print("exceptions: ", nb_exceptions)
     return nb_exceptions
 
 
@@ -210,16 +176,16 @@ def street_factory(line):
 def number_factory(line):
     street_id, numero, rep, lon, lat = line[:-1].split(SEPARATOR)
     street_id = int(street_id)
-    numero = safe_cast(numero, int, -1)  # fixme
+    numero = utils.safe_cast(numero, int, -1)  # fixme
     if numero > 2**16 - 1:
         raise Exception('Error : numero overflows 16bits')
-    lon = degree_to_int(float(lon))
-    lat = degree_to_int(float(lat))
-    return (street_id, numero, rep, lon, lat,)
+    lon = utils.degree_to_int(float(lon))
+    lat = utils.degree_to_int(float(lat))
+    return (street_id, numero, rep, (float(lon), float(lat),),)
 
 
 def create_np_table(in_filename, dtype, factory, out_filename, sort=None):
-    nb_lines = count_file_lines(in_filename)
+    nb_lines = utils.count_file_lines(in_filename)
     table = np.memmap(out_filename, dtype=dtype, mode="w+", shape=(nb_lines,))
     with open(in_filename, "r+") as f:
         for i, line in enumerate(f):
@@ -228,9 +194,21 @@ def create_np_table(in_filename, dtype, factory, out_filename, sort=None):
         table.sort(order=sort)
         print('sorted %s on %s' % (out_filename, sort))
     table.flush()
-    print('written ', out_filename, ' : %.3f' % b_to_mb(table.nbytes), 'MB')
-    os.remove(in_filename)
+    print('written ', out_filename, ' : %.3f' % utils.b_to_mb(table.nbytes),
+          'MB')
+    #os.remove(in_filename) TODO remove
     return table
+
+
+def create_db():
+    create_np_table(city_csv_path, city_dtype, city_factory,
+                    city_db_path, sort='code_insee')
+
+    create_np_table(street_csv_path, street_dtype, street_factory,
+                    street_db_path)
+
+    create_np_table(number_csv_path, number_dtype, number_factory,
+                    number_db_path, sort='street_id')
 
 
 def index():
@@ -239,6 +217,8 @@ def index():
 
     repetitions = {}
     nb_exceptions = 0
+    street_id_generator = itertools.count()
+    repetition_id_generator = itertools.count()
 
     with open(city_csv_path, 'w') as city_file, \
             open(street_csv_path, 'w') as street_file, \
@@ -248,6 +228,8 @@ def index():
         for departement in departements:
             nb_exceptions += index_departement(departement, city_file,
                                                street_file, number_file,
+                                               street_id_generator,
+                                               repetition_id_generator,
                                                repetitions)
 
         print('TOTAL number of skipped lines : ', nb_exceptions)
@@ -257,14 +239,7 @@ def index():
         repetition_file.write(json.dumps(indexed_repetition))
         print('saved repetition.json reference file')
 
-    create_np_table(city_csv_path, city_dtype, city_factory,
-                    city_db_path, sort='code_insee')
-
-    create_np_table(street_csv_path, street_dtype, street_factory,
-                    street_db_path, sort='code_insee')
-
-    create_np_table(number_csv_path, number_dtype, number_factory,
-                    number_db_path, sort='street_id')
+        create_db()
 
 
 #
@@ -273,12 +248,30 @@ def index():
 
 
 def load_db():
+    cities = np.memmap(city_db_path, dtype=city_dtype, mode='r')
+    streets = np.memmap(street_db_path, dtype=street_dtype, mode='r')
+    numbers = np.memmap(number_db_path, dtype=number_dtype, mode='r')
     return {
-        'cities': np.memmap(city_db_path, dtype=city_dtype, mode='r'),
-        'streets': np.memmap(street_db_path, dtype=street_dtype, mode='r'),
-        'numbers': np.memmap(number_db_path, dtype=number_dtype, mode='r'),
+        'cities': cities,
+        'streets': streets,
+        'numbers': numbers,
+        'insee_index': np.argsort(streets, order='code_insee')
     }
 
+
 if __name__ == '__main__':
-    index()
+    #index()
+    #create_db()
     db = load_db()
+    import time
+
+    start = time.time()
+    kd_tree = reverse.kd_tree_index(db)
+    end = time.time()
+    print("kd-tree indexing ", (end-start))
+
+    start = time.time()
+    #reverse.reverse(kd_tree, db, 2.156033, 48.93589)
+    reverse.reverse(kd_tree, db, 3.109815, 47.239012)
+    end = time.time()
+    print("kdtree ", (end-start))
