@@ -3,6 +3,7 @@ import json
 import os
 
 import numpy as np
+from unidecode import unidecode
 
 import reverse
 import utils
@@ -15,10 +16,12 @@ filename_template = 'BAN_licence_gratuite_repartage_%s.csv'
 
 city_csv_path = 'index/cities.csv'
 street_csv_path = 'index/streets.csv'
+locality_csv_path = 'index/locality.csv'
 number_csv_path = 'index/numbers.csv'
 
 city_db_path = 'index/cities.dat'
 street_db_path = 'index/streets.dat'
+locality_db_path = 'index/localies.dat'
 number_db_path = 'index/numbers.dat'
 
 repetition_ref_path = 'index/repetitions.json'
@@ -64,22 +67,25 @@ street_dtype = np.dtype([('street_id', 'int32'),
                         ('code_insee', 'a5'),
                         ('nom_voie', 'a32')])
 
-location_dtype = np.dtype([('lon', 'int32'),
-                           ('lat', 'int32')])
+# 'lieu-dit' in french
+locality_dtype = np.dtype([('locality_id', 'int32'),
+                          ('nom_ld', 'a80')])
 
 number_dtype = np.dtype([('street_id', 'int32'),
+                        ('locality_id', 'int32'),
                         ('number', 'int16'),
                         ('rep', 'int8'),
-                        ('location', location_dtype)])
+                        ('lon', 'int32'),
+                        ('lat', 'int32')])
 
 #
 # Index
 #
 
 
-def index_departement(departement, city_file, street_file, number_file,
-                      street_id_generator, repetition_id_generator,
-                      repetitions):
+def index_departement(departement, city_file, street_file, locality_file,
+                      number_file, street_id_generator, locality_id_generator,
+                      repetition_id_generator, repetitions):
     file = os.path.join(data_path, filename_template % departement)
     if not os.path.exists(file):
         print('ERROR for departement %s : file not found' % departement)
@@ -89,6 +95,7 @@ def index_departement(departement, city_file, street_file, number_file,
 
     cities = set()
     streets = {}
+    localities = {}
     numbers = set()
 
     with open(file, 'r') as in_file:
@@ -112,12 +119,16 @@ def index_departement(departement, city_file, street_file, number_file,
                 if len(code_post) > 5:
                     raise Exception('Invalid code_post : "%s"' % code_post)
 
+                nom_ld = unidecode(values[8])
+                if len(nom_ld) > 80:
+                    raise Exception('Invalid nom_ld : "%s"' % nom_ld)
+
                 nom_afnor = values[9]
-                if len(code_post) > 32:
-                    raise Exception('Invalid nom_afnor : "%s"' % code_post)
+                if len(nom_afnor) > 32:
+                    raise Exception('Invalid nom_afnor : "%s"' % nom_afnor)
 
                 nom_commune = values[10]
-                if len(code_post) > 45:
+                if len(nom_commune) > 45:
                     raise Exception('Invalid nom_commune : "%s"' % nom_commune)
 
                 lon = values[13]
@@ -141,14 +152,23 @@ def index_departement(departement, city_file, street_file, number_file,
                     street_file.write(street_line + '\n')
                 street_id = streets[street_key]
 
-                number_key = hash(street_id + ':' + numero + ':' + rep)
+                locality_key = hash(nom_ld)
+                if locality_key not in localities:
+                    locality_id = str(next(locality_id_generator))
+                    localities[locality_key] = locality_id
+                    locality_line = ','.join((locality_id, nom_ld,))
+                    locality_file.write(locality_line + '\n')
+                locality_id = localities[locality_key]
+
+                if rep not in repetitions:
+                    repetition_key = str(next(repetition_id_generator))
+                    repetitions[rep] = repetition_key
+                rep = repetitions[rep]
+
+                number_key = hash(street_id + ':' + locality_id + ':' + numero + ':' + rep)
                 if number_key not in numbers:
-                    if rep not in repetitions:
-                        repetition_key = str(next(repetition_id_generator))
-                        repetitions[rep] = repetition_key
-                    rep = repetitions[rep]
                     numbers.add(number_key)
-                    number_line = ','.join((street_id, numero, rep, lon, lat,))
+                    number_line = ','.join((street_id, locality_id, numero, rep, lon, lat,))
                     number_file.write(number_line + '\n')
                 else:
                     duplicates += 1
@@ -173,15 +193,22 @@ def street_factory(line):
     return (street_id, code_insee, nom_voie,)
 
 
+def locality_factory(line):
+    locality_id, nom_ld = line[:-1].split(SEPARATOR)
+    locality_id = int(locality_id)
+    return (locality_id, nom_ld,)
+
+
 def number_factory(line):
-    street_id, numero, rep, lon, lat = line[:-1].split(SEPARATOR)
+    street_id, locality_id, numero, rep, lon, lat = line[:-1].split(SEPARATOR)
     street_id = int(street_id)
+    locality_id = int(locality_id)
     numero = utils.safe_cast(numero, int, -1)  # fixme
     if numero > 2**16 - 1:
         raise Exception('Error : numero overflows 16bits')
     lon = utils.degree_to_int(float(lon))
     lat = utils.degree_to_int(float(lat))
-    return (street_id, numero, rep, (float(lon), float(lat),),)
+    return (street_id, locality_id, numero, rep, float(lon), float(lat),)
 
 
 def create_np_table(in_filename, dtype, factory, out_filename, sort=None):
@@ -207,6 +234,9 @@ def create_db():
     create_np_table(street_csv_path, street_dtype, street_factory,
                     street_db_path)
 
+    create_np_table(locality_csv_path, locality_dtype, locality_factory,
+                    locality_db_path)
+
     create_np_table(number_csv_path, number_dtype, number_factory,
                     number_db_path, sort='street_id')
 
@@ -218,17 +248,21 @@ def index():
     repetitions = {}
     nb_exceptions = 0
     street_id_generator = itertools.count()
+    locality_id_generator = itertools.count()
     repetition_id_generator = itertools.count()
 
     with open(city_csv_path, 'w') as city_file, \
             open(street_csv_path, 'w') as street_file, \
+            open(locality_csv_path, 'w') as locality_file, \
             open(number_csv_path, 'w') as number_file, \
             open(repetition_ref_path, 'w') as repetition_file:
 
         for departement in departements:
             nb_exceptions += index_departement(departement, city_file,
-                                               street_file, number_file,
+                                               street_file, locality_file,
+                                               number_file,
                                                street_id_generator,
+                                               locality_id_generator,
                                                repetition_id_generator,
                                                repetitions)
 
@@ -250,10 +284,12 @@ def index():
 def load_db():
     cities = np.memmap(city_db_path, dtype=city_dtype, mode='r')
     streets = np.memmap(street_db_path, dtype=street_dtype, mode='r')
+    localities = np.memmap(locality_db_path, dtype=locality_dtype, mode='r')
     numbers = np.memmap(number_db_path, dtype=number_dtype, mode='r')
     return {
         'cities': cities,
         'streets': streets,
+        'localities': localities,
         'numbers': numbers,
         'insee_index': np.argsort(streets, order='code_insee')
     }
@@ -271,7 +307,7 @@ if __name__ == '__main__':
     print("kd-tree indexing ", (end-start))
 
     start = time.time()
-    #reverse.reverse(kd_tree, db, 2.156033, 48.93589)
-    reverse.reverse(kd_tree, db, 3.109815, 47.239012)
+    address = reverse.reverse(kd_tree, db, 3.109815, 47.239012)
     end = time.time()
+    print(address)
     print("kdtree ", (end-start))
