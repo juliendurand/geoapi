@@ -1,6 +1,7 @@
 import itertools
 import json
 import os
+import sys
 
 import numpy as np
 from unidecode import unidecode
@@ -296,18 +297,20 @@ def load_db():
 
 
 if __name__ == '__main__':
-    #index()
-    #create_db()
-    db = load_db()
-    import time
-
-    start = time.time()
-    kd_tree = reverse.kd_tree_index(db)
-    end = time.time()
-    print("kd-tree indexing ", (end-start))
-
-    start = time.time()
-    address = reverse.reverse(kd_tree, db, 3.109815, 47.239012)
-    end = time.time()
-    print(address)
-    print("kdtree ", (end-start))
+    if len(sys.argv) > 1:
+        if sys.argv[0] == 'index':
+            print('indexing')
+            index()
+#    db = load_db()
+#    import time
+#
+#    start = time.time()
+#    kd_tree = reverse.kd_tree_index(db)
+#    end = time.time()
+#    print("kd-tree indexing ", (end-start))
+#
+#    start = time.time()
+#    address = reverse.reverse(kd_tree, db, 3.109815, 47.239012)
+#    end = time.time()
+#    print(address)
+#    print("kdtree ", (end-start))
