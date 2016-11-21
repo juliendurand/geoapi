@@ -5,12 +5,24 @@ from flask import Flask, request
 
 import main
 import reverse
+import utils
 
 
 db = main.load_db()
 kd_tree = reverse.kd_tree_index(db)
 
 app = Flask(__name__)
+
+
+@app.route('/distance')
+def distance():
+    # in meters
+    lon1 = float(request.args.get('lon1'))
+    lat1 = float(request.args.get('lat1'))
+    lon2 = float(request.args.get('lon2'))
+    lat2 = float(request.args.get('lat2'))
+    d = round(utils.haversine(lon1, lat1, lon2, lat2), 2)
+    return json.dumps(d)
 
 
 @app.route('/search')
