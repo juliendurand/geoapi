@@ -280,12 +280,13 @@ def index():
     create_db()
 
 
-class AdressDatabase:
+class AddressDatabase:
 
     def __init__(self):
         self.cities = np.memmap(city_db_path, dtype=city_dtype, mode='r')
         self.streets = np.memmap(street_db_path, dtype=street_dtype, mode='r')
-        self.localities = np.memmap(locality_db_path, dtype=locality_dtype, mode='r')
+        self.localities = np.memmap(locality_db_path, dtype=locality_dtype,
+                                    mode='r')
         self.numbers = np.memmap(number_db_path, dtype=number_dtype, mode='r')
         self.insee_index = np.argsort(self.streets, order='code_insee')
 
