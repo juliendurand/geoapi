@@ -206,10 +206,10 @@ def process_csv_files():
 
         print('TOTAL number of skipped lines : ', nb_exceptions)
 
-    indexed_repetition = {int(v): k for k, v in repetitions.items()}
-    indexed_repetition = sorted(indexed_repetition)
-    repetition_file.write(json.dumps(indexed_repetition))
-    print('saved repetition.json reference file')
+        indexed_repetition = {int(v): k for k, v in repetitions.items()}
+        indexed_repetition = sorted(indexed_repetition)
+        repetition_file.write(json.dumps(indexed_repetition))
+        print('saved repetition.json reference file')
 
 
 def city_factory(line):
@@ -279,10 +279,6 @@ def index():
 
     create_db()
 
-
-#
-# Load
-#
 
 class AdressDatabase:
 
