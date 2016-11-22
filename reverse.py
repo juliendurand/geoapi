@@ -16,17 +16,16 @@ def to_plain_address(locality, number, street, code_post, city, country):
 
 
 def to_address(db, idx, distance=None):
-    n = db['numbers'][idx]
+    n = db.numbers[idx]
     street_id = n['street_id']
     locality_id = n['locality_id']
-    street = db['streets'][street_id]
+    street = db.streets[street_id]
 
     code_insee = street['code_insee']
-    c = db['cities']
-    city_arg = c['code_insee'].searchsorted(code_insee)
-    city = c[city_arg]
+    city_arg = db.cities['code_insee'].searchsorted(code_insee)
+    city = db.cities[city_arg]
 
-    locality = db['localities'][locality_id]['nom_ld'].decode('UTF-8')
+    locality = db.localities[locality_id]['nom_ld'].decode('UTF-8')
     number = int(n['number'])
     nom_voie = street['nom_voie'].decode('UTF-8')
     code_post = city['code_post'].decode('UTF-8')
@@ -57,8 +56,7 @@ def to_address(db, idx, distance=None):
 
 
 def kd_tree_index(db):
-    locations = db['numbers']
-    data = np.dstack((locations['lon'], locations['lat']))[0]
+    data = np.dstack((db.numbers['lon'], db.numbers['lat']))[0]
     kd_tree = KDTree(data, leafsize=10000)
     return kd_tree
 
@@ -70,7 +68,7 @@ def reverse(kd_tree, db, lon, lat):
     # calculate haversine distance to get the real orthonormic distance
     results = {}
     for hyp in idx[0]:
-        pos = db['numbers'][hyp]
+        pos = db.numbers[hyp]
         hlon = int_to_degree(pos['lon'])
         hlat = int_to_degree(pos['lat'])
         d = haversine(hlon, hlat, lon, lat)

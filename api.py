@@ -8,7 +8,7 @@ import reverse
 import utils
 
 
-db = main.load_db()
+db = main.AddressDatabase()
 kd_tree = reverse.kd_tree_index(db)
 
 app = Flask(__name__)
