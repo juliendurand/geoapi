@@ -75,3 +75,20 @@ def reverse(kd_tree, db, lon, lat):
         results[d] = hyp
     idx = sorted(results)[0]
     return to_address(db, results[idx], d)
+
+
+if __name__ == '__main__':
+    import main
+    db = main.AddressDatabase()
+    kd_tree = kd_tree_index(db)
+    in_file = 'data/adresses_vAMABIS_v28092016_out_v2.csv'
+    with open(in_file, 'r') as addresses:
+        for line in addresses:
+            try:
+                values = line.split(';')
+                lon = float(values[31])
+                lat = float(values[32])
+                address = reverse(kd_tree, db, lon, lat)
+                print(lon, lat, values[4], ', '.join(address['text']))
+            except:
+                pass

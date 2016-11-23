@@ -1,15 +1,6 @@
 import difflib
 import json
-import os
 import re
-
-
-def get_code_insee_filename(code_insee):
-    root = code_insee[:2]
-    folder = os.path.join(index_path, root)
-    if not os.path.exists(folder):
-        os.mkdir(folder)
-        return os.path.join(folder, code_insee+'.json')
 
 
 def street_to_json(street):
@@ -40,7 +31,7 @@ def get_number(query):
 import time
 
 
-def get(code_insee, query):
+def search(db, code_insee, query):
     query = query.lower()
     number = get_number(query)
     match = None
