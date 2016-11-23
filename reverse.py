@@ -57,7 +57,7 @@ def to_address(db, idx, distance=None):
 
 def kd_tree_index(db):
     data = np.dstack((db.numbers['lon'], db.numbers['lat']))[0]
-    kd_tree = KDTree(data, leafsize=100000)
+    kd_tree = KDTree(data, leafsize=10000)
     return kd_tree
 
 
