@@ -74,7 +74,7 @@ def reverse(kd_tree, db, lon, lat):
         d = haversine(hlon, hlat, lon, lat)
         results[d] = hyp
     idx = sorted(results)[0]
-    return to_address(db, results[idx], d)
+    return to_address(db, results[idx], idx)
 
 
 if __name__ == '__main__':
