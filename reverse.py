@@ -83,12 +83,40 @@ if __name__ == '__main__':
     kd_tree = kd_tree_index(db)
     in_file = 'data/adresses_vAMABIS_v28092016_out_v2.csv'
     with open(in_file, 'r') as addresses:
+        i = 0
         for line in addresses:
+            if i == 0:
+                print(line+';locality;number;street;code_post;city;code_insee;country;distance;lon;lat;')
+                i = 1
+                continue
+            address = {
+                'locality': '',
+                'number': '',
+                'street': '',
+                'code_post': '',
+                'city': '',
+                'code_insee': '',
+                'country': '',
+                'lon': '',
+                'lat': '',
+            }
             try:
-                values = line.split(';')
+                values = line[:-1].split(';')
                 lon = float(values[31])
                 lat = float(values[32])
                 address = reverse(kd_tree, db, lon, lat)
-                print(lon, lat, values[4], ', '.join(address['text']))
+                values += [
+                    address['locality'],
+                    address['number'],
+                    address['street'],
+                    address['code_post'],
+                    address['city'],
+                    address['code_insee'],
+                    address['country'],
+                    address['distance'],
+                    address['lon'],
+                    address['lat'],
+                    ]
             except:
                 pass
+            print(";".join(map(str, values)))
