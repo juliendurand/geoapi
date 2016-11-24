@@ -1,14 +1,7 @@
+import bisect
 import difflib
 import json
 import re
-
-
-def street_to_json(street):
-    data = {
-        'nom': street.nom_voie,
-        'numeros': [v._asdict() for k, v in street.numbers.items()]
-    }
-    return json.dumps(data)
 
 
 def score_street(query, street):
@@ -28,32 +21,47 @@ def get_number(query):
             pass
     return 0
 
-import time
+
+def find(x, index, values):
+    lo = 0
+    hi = len(index)
+    while lo < hi:
+        mid = (lo+hi)//2
+        midval = values[index[mid]]
+        if midval < x:
+            lo = mid+1
+        elif midval > x:
+            hi = mid
+        else:
+            return mid
+    return -1
 
 
 def search(db, code_insee, query):
     query = query.lower()
     number = get_number(query)
     match = None
-    start = time.perf_counter()
-    with open(get_code_insee_filename(code_insee), 'r') as db:
-        max_score = 0
-        for line in db:
-            street = json.loads(line)
-            score = score_street(query, street)
-            if score > max_score:
-                max_score = score
-                match = street
+    max_score = 0
+    street_idx = find(code_insee, db.code_insee_index, db.streets)
+    while True:
+        street_id = db.code_insee_index[street_idx]
+        street = db.streets[street_id]
+        if street['code_insee'] != code_insee:
+            break
+        score = score_street(query, street['nom_voie'])
+        if score > max_score:
+            max_score = score
+            match = street
+        street_idx += 1
+    street_id = match['street_id']
     number_match = None
-    stop = time.perf_counter()
-    print (stop-start)
-    for numero in match['numeros']:
-        if numero['numero'] == str(number):
-            number_match = numero
+    # for numero in match['numeros']:
+    #    if numero['numero'] == str(number):
+    #        number_match = numero
     return {
         'code_insee': code_insee,
-        'voie': match['nom'],
-        'numero': number,
-        'lat': number_match['lat'] if number_match else "",
-        'lon': number_match['lon'] if number_match else "",
+        'nom_voie': match['nom_voie'],
+        # 'numero': number,
+        # 'lat': number_match['lat'] if number_match else "",
+        # 'lon': number_match['lon'] if number_match else "",
         }
