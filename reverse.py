@@ -81,7 +81,8 @@ if __name__ == '__main__':
     import main
     db = main.AddressDatabase()
     kd_tree = kd_tree_index(db)
-    in_file = 'data/adresses_vAMABIS_v28092016_out_v2.csv'
+    # in_file = 'data/adresses_vAMABIS_v28092016_out_v2.csv'
+    in_file = 'data/ADRESSES_PART_GEO_AMABIS_v01072016_out.csv'
     with open(in_file, 'r') as addresses:
         i = 0
         for line in addresses:
@@ -100,10 +101,12 @@ if __name__ == '__main__':
                 'lon': '',
                 'lat': '',
             }
+            values = line[:-1].replace('"', '').split(';')
+            print(values[32], values[33])
             try:
-                values = line[:-1].split(';')
-                lon = float(values[31])
-                lat = float(values[32])
+
+                lon = float(values[32])
+                lat = float(values[33])
                 address = reverse(kd_tree, db, lon, lat)
                 values += [
                     address['locality'],

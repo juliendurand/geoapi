@@ -288,7 +288,7 @@ class AddressDatabase:
         self.localities = np.memmap(locality_db_path, dtype=locality_dtype,
                                     mode='r')
         self.numbers = np.memmap(number_db_path, dtype=number_dtype, mode='r')
-        self.insee_index = np.argsort(self.streets, order='code_insee')
+        self.streets_insee_index = np.argsort(self.streets, order='code_insee')
 
 
 if __name__ == '__main__':
