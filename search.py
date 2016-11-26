@@ -81,16 +81,16 @@ def score_city(query, city):
     return score_street(query, city)
 
 
-def best_match(query, items, score):
+def best_match(query, items, score, min_score=0):
     match = None
-    max_score = 0
+    max_score = min_score
     for i, item in enumerate(items):
         score = score_city(query, item)
         if score > max_score:
             match = i
             max_score = score
     if match is not None:
-        return match
+        return (match, max_score,)
 
 
 def get_number(query):
@@ -119,39 +119,41 @@ def search_by_insee(db, code_insee, query):
     max_score = 0
     match_id = None
 
+    # find street
     street_pos_list = find_all_from_index(code_insee, db.streets_insee_index,
                                           db.streets['code_insee'],
                                           string=True)
     streets = [db.streets[pos] for pos in street_pos_list]
     names = [s['nom_voie'].decode('UTF-8') for s in streets]
     street = best_match(query, names, score_street)
-    match_id = streets[street]['street_id'] if street is not None else None
+    match_id, max_score = streets[street]['street_id'] if street is not None else None
 
+    # find locality
+    locality_pos_list = find_all_from_index(code_insee,
+                                            db.localities_insee_index,
+                                            db.streets['code_insee'],
+                                            string=True)
+    localities = [db.localities[pos] for pos in locality_pos_list]
+    names = [l['nom_ld'].decode('UTF-8') for l in localities]
+    locality = best_match(query, names, score_locality, min_score=max_score)
+    if locality is not None:
+        match_id = localities[locality]['locality_id']
+        is_locality = True
+
+    #locality_id = None
+    #locality_idx = find_index(code_insee, db.localities_insee_index,
+    #                          db.localities['code_insee'], string=True)
     #while True:
-    #    street_id = db.streets_insee_index[street_idx]
-    #    street = db.streets[street_id]
-    #    if street['code_insee'].decode('UTF-8') != code_insee:
+    #    locality_id = db.localities_insee_index[locality_idx]
+    #    locality = db.localities[locality_id]
+    #    if locality['code_insee'].decode('UTF-8') != code_insee:
     #        break
-    #    score = score_street(query, street['nom_voie'].decode('UTF-8'))
+    #    score = score_locality(query, locality['nom_ld'].decode('UTF-8'))
     #    if score > max_score:
+    #        is_locality = True
     #        max_score = score
-    #        match_id = street['street_id']
-    #    street_idx += 1
-
-    locality_id = None
-    locality_idx = find_index(code_insee, db.localities_insee_index,
-                              db.localities['code_insee'], string=True)
-    while True:
-        locality_id = db.localities_insee_index[locality_idx]
-        locality = db.localities[locality_id]
-        if locality['code_insee'].decode('UTF-8') != code_insee:
-            break
-        score = score_locality(query, locality['nom_ld'].decode('UTF-8'))
-        if score > max_score:
-            is_locality = True
-            max_score = score
-            match_id = locality['locality_id']
-        locality_idx += 1
+    #        match_id = locality['locality_id']
+    #    locality_idx += 1
 
     if not match_id:
         return None
