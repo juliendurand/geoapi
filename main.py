@@ -21,8 +21,11 @@ number_csv_path = 'index/numbers.csv'
 
 city_db_path = 'index/cities.dat'
 street_db_path = 'index/streets.dat'
-locality_db_path = 'index/localies.dat'
+locality_db_path = 'index/localities.dat'
 number_db_path = 'index/numbers.dat'
+streets_insee_index_path = 'index/streets_insee_index.dat'
+localities_insee_index_path = 'index/localities_insee_index.dat'
+numbers_locality_index_path = 'index/numbers_locality_index.dat'
 
 repetition_ref_path = 'index/repetitions.json'
 
@@ -258,18 +261,30 @@ def create_np_table(in_filename, dtype, factory, out_filename, sort=None):
     return table
 
 
+def create_np_index(table, column, out_filename):
+    index_column = np.argsort(table, order=column).astype('int32')
+    np.save(out_filename, index_column)
+    print('written ', out_filename, ' : %.3f' %
+          utils.b_to_mb(index_column.nbytes),
+          'MB')
+
+
 def create_db():
     create_np_table(city_csv_path, city_dtype, city_factory,
                     city_db_path, sort='code_insee')
 
-    create_np_table(street_csv_path, street_dtype, street_factory,
-                    street_db_path)
+    streets = create_np_table(street_csv_path, street_dtype, street_factory,
+                              street_db_path)
 
-    create_np_table(locality_csv_path, locality_dtype, locality_factory,
-                    locality_db_path)
+    localities = create_np_table(locality_csv_path, locality_dtype,
+                                 locality_factory, locality_db_path)
 
-    create_np_table(number_csv_path, number_dtype, number_factory,
-                    number_db_path, sort='street_id')
+    numbers = create_np_table(number_csv_path, number_dtype, number_factory,
+                              number_db_path)
+
+    create_np_index(streets, 'code_insee', streets_insee_index_path)
+    create_np_index(localities, 'code_insee', localities_insee_index_path)
+    create_np_index(numbers, 'locality_id', numbers_locality_index_path)
 
 
 def index():
@@ -284,17 +299,30 @@ def index():
 class AddressDatabase:
 
     def __init__(self):
+        print('Database loading starts.')
+
         # data tables
-        self.cities = np.memmap(city_db_path, dtype=city_dtype, mode='r')
-        self.streets = np.memmap(street_db_path, dtype=street_dtype, mode='r')
-        self.localities = np.memmap(locality_db_path, dtype=locality_dtype,
-                                    mode='r')
-        self.numbers = np.memmap(number_db_path, dtype=number_dtype, mode='r')
+        print('Loading cities.')
+        self.cities = np.memmap(city_db_path, dtype=city_dtype)
+        print('Loading streets.')
+        self.streets = np.memmap(street_db_path, dtype=street_dtype)
+        print('Loading localities.')
+        self.localities = np.memmap(locality_db_path, dtype=locality_dtype)
+        print('Loading numbers.')
+        self.numbers = np.memmap(number_db_path, dtype=number_dtype)
 
         # indices
-        self.streets_insee_index = np.argsort(self.streets, order='code_insee')
-        self.localities_insee_index = np.argsort(self.localities,
-                                                 order='code_insee')
+        print('Loading street_insee_index.')
+        self.streets_insee_index = np.memmap(streets_insee_index_path+'.npy',
+                                             dtype='int32')
+        print('Loading localities_insee_index.')
+        self.localities_insee_index = np.memmap(localities_insee_index_path+'.npy',
+                                             dtype='int32')
+        print('Loading number_locality_index.')
+        self.numbers_locality_index = np.memmap(numbers_locality_index_path+'.npy',
+                                             dtype='int32')
+
+        print('Database loaded.')
 
 
 if __name__ == '__main__':
