@@ -50,7 +50,8 @@ def find_index(x, index, values, string=False):
 
 def find_all_from_index(x, index, values, string=False):
     idx = find_index(x, index, values, string)
-    while True:
+    n = len(index)
+    while idx < n:
         pos = index[idx]
         value = values[pos]
         if string:
@@ -89,8 +90,7 @@ def best_match(query, items, score, min_score=0):
         if score > max_score:
             match = i
             max_score = score
-    if match is not None:
-        return (match, max_score,)
+    return (match, max_score,)
 
 
 def get_number(query):
@@ -108,7 +108,7 @@ def search_insee(db, code_post, city):
                                         db.cities['code_post'], string=True)
     cities = [db.cities[pos] for pos in city_pos_list]
     names = [c['nom_commune'].decode('UTF-8') for c in cities]
-    city = best_match(city.upper(), names, score_city)
+    city, max_score = best_match(city.upper(), names, score_city)
     return cities[city]['code_insee'].decode('UTF-8') if city is not None else None
 
 
@@ -125,35 +125,22 @@ def search_by_insee(db, code_insee, query):
                                           string=True)
     streets = [db.streets[pos] for pos in street_pos_list]
     names = [s['nom_voie'].decode('UTF-8') for s in streets]
-    street = best_match(query, names, score_street)
-    match_id, max_score = streets[street]['street_id'] if street is not None else None
+    street, max_score = best_match(query, names, score_street)
+    if street is not None:
+        match_id = streets[street]['street_id']
 
     # find locality
     locality_pos_list = find_all_from_index(code_insee,
                                             db.localities_insee_index,
-                                            db.streets['code_insee'],
+                                            db.localities['code_insee'],
                                             string=True)
     localities = [db.localities[pos] for pos in locality_pos_list]
     names = [l['nom_ld'].decode('UTF-8') for l in localities]
-    locality = best_match(query, names, score_locality, min_score=max_score)
+    locality, max_score = best_match(query, names, score_locality,
+                                     min_score=max_score)
     if locality is not None:
         match_id = localities[locality]['locality_id']
         is_locality = True
-
-    #locality_id = None
-    #locality_idx = find_index(code_insee, db.localities_insee_index,
-    #                          db.localities['code_insee'], string=True)
-    #while True:
-    #    locality_id = db.localities_insee_index[locality_idx]
-    #    locality = db.localities[locality_id]
-    #    if locality['code_insee'].decode('UTF-8') != code_insee:
-    #        break
-    #    score = score_locality(query, locality['nom_ld'].decode('UTF-8'))
-    #    if score > max_score:
-    #        is_locality = True
-    #        max_score = score
-    #        match_id = locality['locality_id']
-    #    locality_idx += 1
 
     if not match_id:
         return None
@@ -180,7 +167,6 @@ def search_by_zip_and_city(db, code_post, city, query):
     import time
     start = time.time()
     code_insee = search_insee(db, code_post, city)
-    print(code_insee)
     print(time.time()-start)
     result = search_by_insee(db, code_insee, query)
     print(time.time()-start)
