@@ -39,6 +39,7 @@ city_db_path = 'index/cities.dat'
 street_db_path = 'index/streets.dat'
 locality_db_path = 'index/localities.dat'
 number_db_path = 'index/numbers.dat'
+cities_post_index_path = 'index/cities_post_index.dat'
 streets_insee_index_path = 'index/streets_insee_index.dat'
 localities_insee_index_path = 'index/localities_insee_index.dat'
 numbers_locality_index_path = 'index/numbers_locality_index.dat'
@@ -286,8 +287,8 @@ def create_np_index(table, column, out_filename):
 
 
 def create_db():
-    create_np_table(city_csv_path, city_dtype, city_factory,
-                    city_db_path, sort='code_insee')
+    cities = create_np_table(city_csv_path, city_dtype, city_factory,
+                             city_db_path, sort='code_insee')
 
     streets = create_np_table(street_csv_path, street_dtype, street_factory,
                               street_db_path)
@@ -298,6 +299,7 @@ def create_db():
     numbers = create_np_table(number_csv_path, number_dtype, number_factory,
                               number_db_path)
 
+    create_np_index(cities, 'code_post', cities_post_index_path)
     create_np_index(streets, 'code_insee', streets_insee_index_path)
     create_np_index(localities, 'code_insee', localities_insee_index_path)
     create_np_index(numbers, 'locality_id', numbers_locality_index_path)
@@ -328,6 +330,9 @@ class AddressDatabase:
         self.numbers = np.memmap(number_db_path, dtype=number_dtype)
 
         # indices
+        print('Loading cities_post_index.')
+        self.cities_post_index = np.memmap(cities_post_index_path+'.npy',
+                                             dtype='int32')
         print('Loading street_insee_index.')
         self.streets_insee_index = np.memmap(streets_insee_index_path+'.npy',
                                              dtype='int32')
