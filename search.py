@@ -54,6 +54,10 @@ def find_index(x, index, values, str=False):
     return lo
 
 
+def search_city(db, query):
+    return
+
+
 def search(db, code_insee, query):
     query = query.lower()
     result = None
