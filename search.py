@@ -14,10 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import difflib
+
 import re
+import time
 
 from address import to_address
+from utils import soundex
+from unidecode import unidecode
 
 
 def find(x, values):
@@ -62,18 +65,30 @@ def find_all_from_index(x, index, values, string=False):
         idx += 1
 
 
+def simple_str_metric(s1, s2):
+    set1 = set(s1.split())
+    set2 = set(s2.split())
+    intersection = set1 & set2
+    union = set1 | set2
+    return float(len(intersection))/len(union)
+
+
+def soundex_str_metric(s1, s2):
+    set1 = set(map(soundex, s1.split()))
+    set2 = set(map(soundex, s2.split()))
+    intersection = set1 & set2
+    union = set1 | set2
+    return float(len(intersection))/len(union)
+
+
 def score_default(query, item):
-    if not query:
+    if not query or not item:
         return 0
     query = query.upper()
     item = item.upper()
-    query_set = set(query.split())
-    item_set = set(item.split())
-    intersection = query_set & item_set
-    union = query_set | item_set
-    return float(len(intersection))/len(union)
-    #return difflib.SequenceMatcher(a=query.lower(),
-    #                               b=street['nom'].lower()).   ratio()
+    score = simple_str_metric(query, item) * 0.8 + \
+        soundex_str_metric(query, item) * 0.2
+    return score
 
 
 def score_street(query, street):
@@ -119,20 +134,23 @@ def search_insee(db, code_post, city):
 
 
 def search_by_insee(db, code_insee, query):
+    query = unidecode(query)
     result = None
     is_locality = False
     max_score = 0
     match_id = None
+    number = get_number(query)
 
     # find street
-    street_pos_list = find_all_from_index(code_insee, db.streets_insee_index,
-                                          db.streets['code_insee'],
-                                          string=True)
-    streets = [db.streets[pos] for pos in street_pos_list]
-    names = [s['nom_voie'].decode('UTF-8') for s in streets]
-    street, max_score = best_match(query, names, score_street)
-    if street is not None:
-        match_id = streets[street]['street_id']
+    if number:
+        street_pos_list = find_all_from_index(code_insee, db.streets_insee_index,
+                                              db.streets['code_insee'],
+                                              string=True)
+        streets = [db.streets[pos] for pos in street_pos_list]
+        names = [s['nom_voie'].decode('UTF-8') for s in streets]
+        street, max_score = best_match(query, names, score_street)
+        if street is not None:
+            match_id = streets[street]['street_id']
 
     # find locality
     locality_pos_list = find_all_from_index(code_insee,
@@ -154,8 +172,7 @@ def search_by_insee(db, code_insee, query):
         result_idx = find_index(match_id, db.numbers_locality_index,
                                 db.numbers['locality_id'])
         result = db.numbers_locality_index[result_idx]
-    else:
-        number = get_number(query)
+    elif number:
         n_idx = find(match_id, db.numbers['street_id'])
         while True:
             n = db.numbers[n_idx]
@@ -169,18 +186,16 @@ def search_by_insee(db, code_insee, query):
 
 
 def search_by_zip_and_city(db, code_post, city, query):
-    import time
     start = time.time()
     code_insee = search_insee(db, code_post, city)
-    print(time.time()-start)
     result = search_by_insee(db, code_insee, query)
-    print(time.time()-start)
-    if result:
-        return result
-    return
+    result['time'] = time.time()-start
+    print(result['time'])
+    return result
 
 if __name__ == '__main__':
     import main
     db = main.AddressDatabase()
-    print(search_by_zip_and_city(db, '58400', 'narcy', 'Le boisson'))  # '58189',
+    print(search_by_zip_and_city(db, '44300', 'Nantes', '40 rue de la cognardière'))
+    print(search_by_zip_and_city(db, '58400', 'narcy', 'Le buisson'))  # '58189',
     print(search_by_zip_and_city(db, '78500', 'sartrouville', '10 Jules Ferry'))  # '78586',

@@ -29,6 +29,21 @@ def to_plain_address(locality, number, street, code_post, city, country):
 
 
 def to_address(db, idx, distance=None):
+    default_response = {
+        'locality': None,
+        'number': None,
+        'street': None,
+        'code_post': None,
+        'city': None,
+        'code_insee': None,
+        'country': None,
+        'lon': None,
+        'lat': None,
+    }
+
+    if idx is None:
+        return default_response
+
     n = db.numbers[idx]
     street_id = n['street_id']
     locality_id = n['locality_id']
@@ -37,7 +52,6 @@ def to_address(db, idx, distance=None):
     code_insee = street['code_insee']
     city_arg = db.cities['code_insee'].searchsorted(code_insee)
     city = db.cities[city_arg]
-
     locality = db.localities[locality_id]['nom_ld'].decode('UTF-8')
     number = int(n['number'])
     nom_voie = street['nom_voie'].decode('UTF-8')
