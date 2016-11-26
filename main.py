@@ -69,6 +69,7 @@ street_dtype = np.dtype([('street_id', 'int32'),
 
 # 'lieu-dit' in french
 locality_dtype = np.dtype([('locality_id', 'int32'),
+                          ('code_insee', 'a5'),
                           ('nom_ld', 'a80')])
 
 number_dtype = np.dtype([('street_id', 'int32'),
@@ -152,11 +153,11 @@ def index_departement(departement, city_file, street_file, locality_file,
                     street_file.write(street_line + '\n')
                 street_id = streets[street_key]
 
-                locality_key = hash(nom_ld)
+                locality_key = hash(code_insee + ':' + nom_ld)
                 if locality_key not in localities:
                     locality_id = str(next(locality_id_generator))
                     localities[locality_key] = locality_id
-                    locality_line = ','.join((locality_id, nom_ld,))
+                    locality_line = ','.join((locality_id, code_insee, nom_ld,))
                     locality_file.write(locality_line + '\n')
                 locality_id = localities[locality_key]
 
@@ -224,9 +225,9 @@ def street_factory(line):
 
 
 def locality_factory(line):
-    locality_id, nom_ld = line[:-1].split(SEPARATOR)
+    locality_id, code_insee, nom_ld = line[:-1].split(SEPARATOR)
     locality_id = int(locality_id)
-    return (locality_id, nom_ld,)
+    return (locality_id, code_insee, nom_ld,)
 
 
 def number_factory(line):
@@ -283,12 +284,17 @@ def index():
 class AddressDatabase:
 
     def __init__(self):
+        # data tables
         self.cities = np.memmap(city_db_path, dtype=city_dtype, mode='r')
         self.streets = np.memmap(street_db_path, dtype=street_dtype, mode='r')
         self.localities = np.memmap(locality_db_path, dtype=locality_dtype,
                                     mode='r')
         self.numbers = np.memmap(number_db_path, dtype=number_dtype, mode='r')
+
+        # indices
         self.streets_insee_index = np.argsort(self.streets, order='code_insee')
+        self.localities_insee_index = np.argsort(self.localities,
+                                                 order='code_insee')
 
 
 if __name__ == '__main__':
