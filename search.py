@@ -62,24 +62,30 @@ def find_all_from_index(x, index, values, string=False):
         idx += 1
 
 
-def score_street(query, street):
+def score_default(query, item):
     if not query:
         return 0
-    query_set = set(query.lower().split())
-    street_set = set(street.lower().split())
-    intersection = query_set & street_set
-    union = query_set | street_set
+    query = query.upper()
+    item = item.upper()
+    query_set = set(query.split())
+    item_set = set(item.split())
+    intersection = query_set & item_set
+    union = query_set | item_set
     return float(len(intersection))/len(union)
     #return difflib.SequenceMatcher(a=query.lower(),
     #                               b=street['nom'].lower()).   ratio()
 
 
+def score_street(query, street):
+    return score_default(query, street)
+
+
 def score_locality(query, locality):
-    return score_street(query, locality)
+    return score_default(query, locality)
 
 
 def score_city(query, city):
-    return score_street(query, city)
+    return score_default(query, city)
 
 
 def best_match(query, items, score, min_score=0):
@@ -108,12 +114,11 @@ def search_insee(db, code_post, city):
                                         db.cities['code_post'], string=True)
     cities = [db.cities[pos] for pos in city_pos_list]
     names = [c['nom_commune'].decode('UTF-8') for c in cities]
-    city, max_score = best_match(city.upper(), names, score_city)
+    city, max_score = best_match(city, names, score_city)
     return cities[city]['code_insee'].decode('UTF-8') if city is not None else None
 
 
 def search_by_insee(db, code_insee, query):
-    query = query.lower()
     result = None
     is_locality = False
     max_score = 0
