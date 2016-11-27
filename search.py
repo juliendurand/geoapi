@@ -94,7 +94,6 @@ def score_default(query, item):
     item = item.upper()
     score = ngram_metric(query, item)
     #score = simple_str_metric(query, item) * 0.8 + \
-    score = ngram_metric(query, item)
     #    soundex_str_metric(query, item) * 0.2
     return score
 
