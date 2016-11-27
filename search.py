@@ -18,6 +18,8 @@ limitations under the License.
 import re
 import time
 
+import ngram
+
 from address import to_address
 from utils import soundex
 from unidecode import unidecode
@@ -81,13 +83,19 @@ def soundex_str_metric(s1, s2):
     return float(len(intersection))/len(union)
 
 
+def ngram_metric(s1, s2):
+    return ngram.NGram.compare(s1, s2)
+
+
 def score_default(query, item):
     if not query or not item:
         return 0
     query = query.upper()
     item = item.upper()
-    score = simple_str_metric(query, item) * 0.8 + \
-        soundex_str_metric(query, item) * 0.2
+    score = ngram_metric(query, item)
+    #score = simple_str_metric(query, item) * 0.8 + \
+    score = ngram_metric(query, item)
+    #    soundex_str_metric(query, item) * 0.2
     return score
 
 
