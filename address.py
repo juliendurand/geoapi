@@ -65,15 +65,15 @@ def to_address(db, idx, distance=None):
     lon = int_to_degree(n['lon'])
     lat = int_to_degree(n['lat'])
 
-    response['locality'] = locality,
-    response['number'] = number,
-    response['street'] = nom_voie,
-    response['code_post'] = code_post,
-    response['city'] = nom_commune,
-    response['code_insee'] = code_insee,
-    response['country'] = country,
-    response['lon'] = lon,
-    response['lat'] = lat,
+    response['locality'] = locality
+    response['number'] = number
+    response['street'] = nom_voie
+    response['code_post'] = code_post
+    response['city'] = nom_commune
+    response['code_insee'] = code_insee
+    response['country'] = country
+    response['lon'] = lon
+    response['lat'] = lat
 
     if distance:
         response['distance'] = round(distance, 2)

@@ -21,7 +21,7 @@ import time
 from unidecode import unidecode
 
 from address import to_address
-from utils import soundex
+from utils import soundex, haversine
 from trigram import Trigram
 
 
@@ -173,19 +173,25 @@ def batch(db):
     with open(in_file, 'r') as addresses:
         i = 0
         for line in addresses:
-            line = line[:-1]
+            line = line[:-1].replace('"', '')
             if i == 0:
-                print(line.replace('"', '')+';locality;number;street;code_post;city;code_insee;country;distance;lon;lat;')
+                print(line+';locality;number;street;code_post;city;code_insee;country;distance;lon;lat;time')
                 i = 1
                 continue
-            values = line[:-1].replace('"', '').split(';')
-            print(values[32], values[33])
+            values = line.split(';')
             try:
 
                 code_post = values[5]
                 city = values[6]
                 query = values[3]
                 address = search_by_zip_and_city(db, code_post, city, query)
+                d = None
+                if address['lon'] != 'None' and address['lat'] != 'None':
+                    lon1 = float(values[32])
+                    lat1 = float(values[33])
+                    lon2 = float(address['lon'])
+                    lat2 = float(address['lat'])
+                    d = haversine(lon1, lat1, lon2, lat2)
                 values += [
                     address['locality'],
                     address['number'],
@@ -194,7 +200,7 @@ def batch(db):
                     address['city'],
                     address['code_insee'],
                     address['country'],
-                    address['distance'],
+                    str(d),
                     address['lon'],
                     address['lat'],
                     address['time'],

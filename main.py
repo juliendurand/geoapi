@@ -160,8 +160,9 @@ def index_departement(departement, city_file, street_file, locality_file,
                 if not -90 < float(lat) < 90:
                     raise Exception('Invalid lat : "%s"' % lat)
 
-                if code_insee not in cities:
-                    cities.add(code_insee)
+                city_key = hash(code_insee + ':' + code_post)
+                if city_key not in cities:
+                    cities.add(city_key)
                     city_line = ','.join((code_insee, code_post, nom_commune,))
                     city_file.write(city_line + '\n')
 
