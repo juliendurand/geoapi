@@ -52,6 +52,7 @@ if __name__ == '__main__':
     with open(in_file, 'r') as addresses:
         i = 0
         for line in addresses:
+            line = line[:-1]
             if i == 0:
                 print(line+';locality;number;street;code_post;city;code_insee;country;distance;lon;lat;')
                 i = 1

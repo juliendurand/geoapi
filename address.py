@@ -29,7 +29,7 @@ def to_plain_address(locality, number, street, code_post, city, country):
 
 
 def to_address(db, idx, distance=None):
-    default_response = {
+    response = {
         'locality': None,
         'number': None,
         'street': None,
@@ -39,10 +39,13 @@ def to_address(db, idx, distance=None):
         'country': None,
         'lon': None,
         'lat': None,
+        'text': None,
+        'distance': None,
+        'time': None,
     }
 
     if idx is None:
-        return default_response
+        return response
 
     n = db.numbers[idx]
     street_id = n['street_id']
@@ -62,17 +65,16 @@ def to_address(db, idx, distance=None):
     lon = int_to_degree(n['lon'])
     lat = int_to_degree(n['lat'])
 
-    response = {
-        'locality': locality,
-        'number': number,
-        'street': nom_voie,
-        'code_post': code_post,
-        'city': nom_commune,
-        'code_insee': code_insee,
-        'country': country,
-        'lon': lon,
-        'lat': lat,
-    }
+    response['locality'] = locality,
+    response['number'] = number,
+    response['street'] = nom_voie,
+    response['code_post'] = code_post,
+    response['city'] = nom_commune,
+    response['code_insee'] = code_insee,
+    response['country'] = country,
+    response['lon'] = lon,
+    response['lat'] = lat,
+
     if distance:
         response['distance'] = round(distance, 2)
 

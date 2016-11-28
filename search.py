@@ -18,11 +18,11 @@ limitations under the License.
 import re
 import time
 
-import ngram
+from unidecode import unidecode
 
 from address import to_address
 from utils import soundex
-from unidecode import unidecode
+from trigram import Trigram
 
 
 def find(x, values):
@@ -67,54 +67,14 @@ def find_all_from_index(x, index, values, string=False):
         idx += 1
 
 
-def simple_str_metric(s1, s2):
-    set1 = set(s1.split())
-    set2 = set(s2.split())
-    intersection = set1 & set2
-    union = set1 | set2
-    return float(len(intersection))/len(union)
-
-
-def soundex_str_metric(s1, s2):
-    set1 = set(map(soundex, s1.split()))
-    set2 = set(map(soundex, s2.split()))
-    intersection = set1 & set2
-    union = set1 | set2
-    return float(len(intersection))/len(union)
-
-
-def ngram_metric(s1, s2):
-    return ngram.NGram.compare(s1, s2)
-
-
-def score_default(query, item):
-    if not query or not item:
-        return 0
-    query = query.upper()
-    item = item.upper()
-    score = ngram_metric(query, item)
-    #score = simple_str_metric(query, item) * 0.8 + \
-    #    soundex_str_metric(query, item) * 0.2
-    return score
-
-
-def score_street(query, street):
-    return score_default(query, street)
-
-
-def score_locality(query, locality):
-    return score_default(query, locality)
-
-
-def score_city(query, city):
-    return score_default(query, city)
-
-
-def best_match(query, items, score, min_score=0):
+def best_match(query, items, min_score=0):
+    t = Trigram(query.upper())
     match = None
     max_score = min_score
     for i, item in enumerate(items):
-        score = score_city(query, item)
+        score = t.score(item)
+        if score == 1.0:
+            return (i, 1.0,)
         if score > max_score:
             match = i
             max_score = score
@@ -131,12 +91,17 @@ def get_number(query):
     return 0
 
 
+def get_repetition(query):
+    # TODO
+    pass
+
+
 def search_insee(db, code_post, city):
     city_pos_list = find_all_from_index(code_post, db.cities_post_index,
                                         db.cities['code_post'], string=True)
     cities = [db.cities[pos] for pos in city_pos_list]
     names = [c['nom_commune'].decode('UTF-8') for c in cities]
-    city, max_score = best_match(city, names, score_city)
+    city, max_score = best_match(city, names)
     return cities[city]['code_insee'].decode('UTF-8') if city is not None else None
 
 
@@ -155,7 +120,7 @@ def search_by_insee(db, code_insee, query):
                                               string=True)
         streets = [db.streets[pos] for pos in street_pos_list]
         names = [s['nom_voie'].decode('UTF-8') for s in streets]
-        street, max_score = best_match(query, names, score_street)
+        street, max_score = best_match(query, names)
         if street is not None:
             match_id = streets[street]['street_id']
 
@@ -166,8 +131,7 @@ def search_by_insee(db, code_insee, query):
                                             string=True)
     localities = [db.localities[pos] for pos in locality_pos_list]
     names = [l['nom_ld'].decode('UTF-8') for l in localities]
-    locality, max_score = best_match(query, names, score_locality,
-                                     min_score=max_score)
+    locality, max_score = best_match(query, names, min_score=max_score)
     if locality is not None:
         match_id = localities[locality]['locality_id']
         is_locality = True
@@ -189,20 +153,60 @@ def search_by_insee(db, code_insee, query):
                 result = n_idx
                 break
             n_idx += 1
-    return to_address(db, result)
+    return result
 
 
 def search_by_zip_and_city(db, code_post, city, query):
     start = time.time()
+    result = None
     code_insee = search_insee(db, code_post, city)
-    result = search_by_insee(db, code_insee, query)
+    if code_insee:
+        result = search_by_insee(db, code_insee, query)
+    result = to_address(db, result)
     result['time'] = time.time()-start
-    print(result['time'])
     return result
+
+
+def batch(db):
+    # in_file = 'data/adresses_vAMABIS_v28092016_out_v2.csv'
+    in_file = 'data/ADRESSES_PART_GEO_AMABIS_v01072016_out.csv'
+    with open(in_file, 'r') as addresses:
+        i = 0
+        for line in addresses:
+            line = line[:-1]
+            if i == 0:
+                print(line.replace('"', '')+';locality;number;street;code_post;city;code_insee;country;distance;lon;lat;')
+                i = 1
+                continue
+            values = line[:-1].replace('"', '').split(';')
+            print(values[32], values[33])
+            try:
+
+                code_post = values[5]
+                city = values[6]
+                query = values[3]
+                address = search_by_zip_and_city(db, code_post, city, query)
+                values += [
+                    address['locality'],
+                    address['number'],
+                    address['street'],
+                    address['code_post'],
+                    address['city'],
+                    address['code_insee'],
+                    address['country'],
+                    address['distance'],
+                    address['lon'],
+                    address['lat'],
+                    address['time'],
+                    ]
+            except:
+                pass
+            print(";".join(map(str, values)))
 
 if __name__ == '__main__':
     import main
     db = main.AddressDatabase()
-    print(search_by_zip_and_city(db, '44300', 'Nantes', '40 rue de la cognardière'))
-    print(search_by_zip_and_city(db, '58400', 'narcy', 'Le buisson'))  # '58189',
-    print(search_by_zip_and_city(db, '78500', 'sartrouville', '10 Jules Ferry'))  # '78586',
+    batch(db)
+    #print(search_by_zip_and_city(db, '44300', 'Nantes', '40 rue de la cognardière')['text'])
+    #print(search_by_zip_and_city(db, '58400', 'narcy', 'Le boisson')['text'])  # '58189',
+    #print(search_by_zip_and_city(db, '78500', 'sartrouville', '10 Jules Ferry')['text'])  # '78586',
