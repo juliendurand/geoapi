@@ -160,6 +160,7 @@ def index_departement(departement, city_file, street_file, locality_file,
                 if not -90 < float(lat) < 90:
                     raise Exception('Invalid lat : "%s"' % lat)
 
+                # TODO + FIXME : have a city id for cities with multiple code_post
                 city_key = hash(code_insee + ':' + code_post)
                 if city_key not in cities:
                     cities.add(city_key)
@@ -298,7 +299,7 @@ def create_db():
                                  locality_factory, locality_db_path)
 
     numbers = create_np_table(number_csv_path, number_dtype, number_factory,
-                              number_db_path)
+                              number_db_path, sort='street_id')
 
     create_np_index(cities, 'code_post', cities_post_index_path)
     create_np_index(streets, 'code_insee', streets_insee_index_path)

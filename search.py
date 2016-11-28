@@ -121,6 +121,7 @@ def search_by_insee(db, code_insee, query):
         streets = [db.streets[pos] for pos in street_pos_list]
         names = [s['nom_voie'].decode('UTF-8') for s in streets]
         street, max_score = best_match(query, names)
+
         if street is not None:
             match_id = streets[street]['street_id']
 
@@ -145,6 +146,7 @@ def search_by_insee(db, code_insee, query):
         result = db.numbers_locality_index[result_idx]
     elif number:
         n_idx = find(match_id, db.numbers['street_id'])
+        result = n_idx  # TODO + FIXME : improve by taking middle of the street
         while True:
             n = db.numbers[n_idx]
             if n['street_id'] != match_id:
@@ -180,8 +182,7 @@ def batch(db):
                 continue
             values = line.split(';')
             try:
-
-                code_post = values[5]
+                code_post = values[5].zfill(5)
                 city = values[6]
                 query = values[3]
                 address = search_by_zip_and_city(db, code_post, city, query)
@@ -213,6 +214,7 @@ if __name__ == '__main__':
     import main
     db = main.AddressDatabase()
     batch(db)
+    #print(search_by_zip_and_city(db, '75013', 'PARIS', '7 PLACE DE RUNGIS')['text'])
     #print(search_by_zip_and_city(db, '44300', 'Nantes', '40 rue de la cognardière')['text'])
     #print(search_by_zip_and_city(db, '58400', 'narcy', 'Le boisson')['text'])  # '58189',
     #print(search_by_zip_and_city(db, '78500', 'sartrouville', '10 Jules Ferry')['text'])  # '78586',
