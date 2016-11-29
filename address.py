@@ -55,8 +55,9 @@ def to_address(db, idx, distance=None):
     code_insee = street['code_insee']
     city_arg = db.cities['code_insee'].searchsorted(code_insee)
     city = db.cities[city_arg]
-    locality = db.localities[locality_id]['nom_ld'].decode('UTF-8')
-    if not locality:
+    locality = db.localities[locality_id]
+    locality_name = locality['nom_ld'].decode('UTF-8')
+    if not locality_name:
         number = int(n['number'])
         nom_voie = street['nom_voie'].decode('UTF-8')
         code_post = street['code_post'].decode('UTF-8')

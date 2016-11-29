@@ -260,8 +260,8 @@ def batch2(db):
 if __name__ == '__main__':
     import main
     db = main.AddressDatabase()
-    batch2(db)
-    #print(search_by_zip_and_city(db, '75013', 'PARIS', '7 PLACE DE RUNGIS')['text'])
-    #print(search_by_zip_and_city(db, '44300', 'Nantes', '40 rue de la cognardière')['text'])
-    #print(search_by_zip_and_city(db, '58400', 'narcy', 'Le boisson')['text'])  # '58189',
-    #print(search_by_zip_and_city(db, '78500', 'sartrouville', '10 Jules Ferry')['text'])  # '78586',
+    #batch2(db)
+    print(search_by_zip_and_city(db, '75013', 'PARIS', '7 PLACE DE RUNGIS')['text'])
+    print(search_by_zip_and_city(db, '44300', 'Nantes', '40 rue de la cognardière')['text'])
+    print(search_by_zip_and_city(db, '58400', 'narcy', 'Le boisson')['text'])  # '58189',
+    print(search_by_zip_and_city(db, '78500', 'sartrouville', '10 Jules Ferry')['text'])  # '78586',
