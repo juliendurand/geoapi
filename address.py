@@ -14,7 +14,71 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from enum import Enum
 from utils import int_to_degree
+
+
+class ResultQuality(Enum):
+    ERROR = 0
+    PLATE = 1
+    NUMBER = 2
+    STREET = 3
+    CITY = 4
+    ZIP = 5
+
+
+class Result():
+
+    def __init__(self, quality):
+        self.quality = quality
+        self.error_msg = None
+        self.locality = None
+        self.number = None
+        self.street = None
+        self.city = None
+        self.code_post = None
+        self.code_insee = None
+        self.country = 'France'
+        self.lon = None
+        self.lat = None
+        self.distance = None
+        self.time = None
+
+    @classmethod
+    def from_error(cls, error_msg):
+        r = cls(ResultQuality.ERROR)
+        r.error_msg = error_msg
+        return r
+
+    @classmethod
+    def from_plate(cls, number_id, distance=None):
+        r = cls(ResultQuality.PLATE)
+        if distance:
+            r.distance = round(distance, 2)  # precision to 1 cm
+        return r
+
+    @classmethod
+    def from_interpolated(cls, street_id, lon, lat):
+        r = cls(ResultQuality.NUMBER)
+        return r
+
+    @classmethod
+    def from_street(cls, street_id, lon, lat):
+        r = cls(ResultQuality.STREET)
+        return r
+
+    @classmethod
+    def from_city(cls, code_insee, lon, lat):
+        r = cls(ResultQuality.CITY)
+        return r
+
+    @classmethod
+    def from_code_post(cls, code_post, lon, lat):
+        r = cls(ResultQuality.ZIP)
+        return r
+
+    def to_address(self):
+        return self.__dict__()
 
 
 def to_plain_address(locality, number, street, code_post, city, country):
