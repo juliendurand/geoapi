@@ -59,10 +59,11 @@ def to_address(db, idx, distance=None):
     if not locality:
         number = int(n['number'])
         nom_voie = street['nom_voie'].decode('UTF-8')
+        code_post = street['code_post'].decode('UTF-8')
     else:
         number = ''
         nom_voie = ''
-    code_post = city['code_post'].decode('UTF-8')
+        code_post = locality['code_post'].decode('UTF-8')
     nom_commune = city['nom_commune'].decode('UTF-8')
     code_insee = code_insee.decode('UTF-8')
     country = 'FRANCE'

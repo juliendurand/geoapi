@@ -85,11 +85,13 @@ city_dtype = np.dtype([('code_insee', 'a5'),
 
 street_dtype = np.dtype([('street_id', 'int32'),
                         ('code_insee', 'a5'),
+                        ('code_post', 'a5'),
                         ('nom_voie', 'a32')])
 
 # 'lieu-dit' in french
 locality_dtype = np.dtype([('locality_id', 'int32'),
                           ('code_insee', 'a5'),
+                          ('code_post', 'a5'),
                           ('nom_ld', 'a80')])
 
 number_dtype = np.dtype([('street_id', 'int32'),
@@ -167,19 +169,23 @@ def index_departement(departement, city_file, street_file, locality_file,
                     city_line = ','.join((code_insee, code_post, nom_commune,))
                     city_file.write(city_line + '\n')
 
-                street_key = hash(code_insee + ':' + nom_afnor)
+                street_key = hash(code_insee + ':' + code_post + ':' +
+                                  nom_afnor)
                 if street_key not in streets:
                     street_id = str(next(street_id_generator))
                     streets[street_key] = street_id
-                    street_line = ','.join((street_id, code_insee, nom_afnor,))
+                    street_line = ','.join((street_id, code_insee, code_post,
+                                            nom_afnor,))
                     street_file.write(street_line + '\n')
                 street_id = streets[street_key]
 
-                locality_key = hash(code_insee + ':' + nom_ld)
+                locality_key = hash(code_insee + ':' + code_post + ':' +
+                                    nom_ld)
                 if locality_key not in localities:
                     locality_id = str(next(locality_id_generator))
                     localities[locality_key] = locality_id
-                    locality_line = ','.join((locality_id, code_insee, nom_ld,))
+                    locality_line = ','.join((locality_id, code_insee,
+                                              code_post, nom_ld,))
                     locality_file.write(locality_line + '\n')
                 locality_id = localities[locality_key]
 
@@ -241,15 +247,15 @@ def city_factory(line):
 
 
 def street_factory(line):
-    street_id, code_insee, nom_voie = line[:-1].split(SEPARATOR)
+    street_id, code_insee, code_post, nom_voie = line[:-1].split(SEPARATOR)
     street_id = int(street_id)
-    return (street_id, code_insee, nom_voie,)
+    return (street_id, code_insee, code_post, nom_voie,)
 
 
 def locality_factory(line):
-    locality_id, code_insee, nom_ld = line[:-1].split(SEPARATOR)
+    locality_id, code_insee, code_post, nom_ld = line[:-1].split(SEPARATOR)
     locality_id = int(locality_id)
-    return (locality_id, code_insee, nom_ld,)
+    return (locality_id, code_insee, code_post, nom_ld,)
 
 
 def number_factory(line):
@@ -334,16 +340,16 @@ class AddressDatabase:
         # indices
         print('Loading cities_post_index.')
         self.cities_post_index = np.memmap(cities_post_index_path+'.npy',
-                                             dtype='int32')
+                                           dtype='int32')
         print('Loading street_insee_index.')
         self.streets_insee_index = np.memmap(streets_insee_index_path+'.npy',
                                              dtype='int32')
         print('Loading localities_insee_index.')
         self.localities_insee_index = np.memmap(localities_insee_index_path+'.npy',
-                                             dtype='int32')
+                                                dtype='int32')
         print('Loading number_locality_index.')
         self.numbers_locality_index = np.memmap(numbers_locality_index_path+'.npy',
-                                             dtype='int32')
+                                                dtype='int32')
 
         print('Database loaded.')
 

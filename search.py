@@ -21,7 +21,7 @@ import time
 from unidecode import unidecode
 
 from address import to_address
-from utils import soundex, haversine
+from utils import haversine
 from trigram import Trigram
 
 
@@ -138,7 +138,7 @@ def search_by_insee(db, code_insee, query):
         is_locality = True
 
     if not match_id:
-        return None
+        return None  # TODO + FIXME : return city center
 
     if is_locality:
         result_idx = find_index(match_id, db.numbers_locality_index,
@@ -155,7 +155,7 @@ def search_by_insee(db, code_insee, query):
                 result = n_idx
                 break
             n_idx += 1
-    return result
+    return result  # TODO return quality index
 
 
 def search_by_zip_and_city(db, code_post, city, query):

@@ -63,30 +63,3 @@ def haversine(lon1, lat1, lon2, lat2):
     c = 2 * asin(sqrt(a))
     m = 6367000 * c
     return round(m*100)/100  # precision to 1 cm
-
-
-def soundex(name, len=4):
-    # digits holds the soundex values for the alphabet
-    # english -> digits = '01230120022455012623010202'
-    digits = '01230970072455012683090808'  # french version
-    sndx = ''
-    fc = ''
-
-    # translate alpha chars in name to soundex digits
-    for c in name.upper():
-        if c.isalpha():
-            if not fc:
-                fc = c   # remember first letter
-            d = digits[ord(c)-ord('A')]
-            # duplicate consecutive soundex digits are skipped
-            if not sndx or (d != sndx[-1]):
-                sndx += d
-
-    # replace first digit with first alpha character
-    sndx = fc + sndx[1:]
-
-    # remove all 0s from the soundex code
-    sndx = sndx.replace('0', '')
-
-    # return soundex code padded to len characters
-    return (sndx + (len * '0'))[:len]
