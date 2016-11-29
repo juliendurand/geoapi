@@ -48,16 +48,20 @@ def to_address(db, idx, distance=None):
         return response
 
     n = db.numbers[idx]
-    street_id = n['street_id']
     locality_id = n['locality_id']
+    street_id = n['street_id']
     street = db.streets[street_id]
 
     code_insee = street['code_insee']
     city_arg = db.cities['code_insee'].searchsorted(code_insee)
     city = db.cities[city_arg]
     locality = db.localities[locality_id]['nom_ld'].decode('UTF-8')
-    number = int(n['number'])
-    nom_voie = street['nom_voie'].decode('UTF-8')
+    if not locality:
+        number = int(n['number'])
+        nom_voie = street['nom_voie'].decode('UTF-8')
+    else:
+        number = ''
+        nom_voie = ''
     code_post = city['code_post'].decode('UTF-8')
     nom_commune = city['nom_commune'].decode('UTF-8')
     code_insee = code_insee.decode('UTF-8')

@@ -62,7 +62,7 @@ def haversine(lon1, lat1, lon2, lat2):
     a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
     c = 2 * asin(sqrt(a))
     m = 6367000 * c
-    return m
+    return round(m*100)/100  # precision to 1 cm
 
 
 def soundex(name, len=4):
