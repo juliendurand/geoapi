@@ -1,8 +1,11 @@
 # Prérequis
 
 machine virtuelle (idéalement linux)
+
 Python3
+
 pip3
+
 virtualenv
 
 # Création de l'environnement virtual env
