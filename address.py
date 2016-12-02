@@ -58,7 +58,6 @@ class Result():
         locality_id = n['locality_id']
         street_id = n['street_id']
         street = db.streets[street_id]
-
         code_insee = street['code_insee']
         city_arg = db.cities['code_insee'].searchsorted(code_insee)
         city = db.cities[city_arg]

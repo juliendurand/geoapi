@@ -154,7 +154,7 @@ def search_by_insee(db, code_insee, query):
                 result = n_idx
                 break
             n_idx += 1
-    return result  # TODO return quality index
+    return address.Result.from_plate(db, result)
 
 
 def search_by_zip_and_city(db, code_post, city, query):
@@ -163,7 +163,7 @@ def search_by_zip_and_city(db, code_post, city, query):
     code_insee = search_insee(db, code_post, city)
     if code_insee:
         result = search_by_insee(db, code_insee, query)
-    result = address.Result.from_plate(db, result).to_address()
+    result = result.to_address()
     result['time'] = time.time()-start
     return result
 
@@ -172,6 +172,6 @@ if __name__ == '__main__':
     import main
     db = main.AddressDatabase()
     print(search_by_zip_and_city(db, '75013', 'PARIS', '7 PLACE DE RUNGIS')['text'])
-    print(search_by_zip_and_city(db, '44300', 'Nantes', '40 rue de la cognardière')['text'])
+    print(search_by_zip_and_city(db, '44300', 'Nantes', '41 rue de la cognardière')['text'])
     print(search_by_zip_and_city(db, '58400', 'narcy', 'Le boisson')['text'])  # '58189',
     print(search_by_zip_and_city(db, '78500', 'sartrouville', '10 Jules Ferry')['text'])  # '78586',
