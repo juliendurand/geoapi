@@ -31,18 +31,18 @@ class Result():
 
     def __init__(self, quality):
         self.quality = quality
-        self.error_msg = None
-        self.locality = None
-        self.number = None
-        self.street = None
-        self.city = None
-        self.code_post = None
-        self.code_insee = None
+        self.error_msg = ''
+        self.locality = ''
+        self.number = ''
+        self.street = ''
+        self.city = ''
+        self.code_post = ''
+        self.code_insee = ''
         self.country = 'France'
-        self.lon = None
-        self.lat = None
-        self.distance = None
-        self.time = None
+        self.lon = ''
+        self.lat = ''
+        self.distance = ''
+        self.time = ''
 
     @classmethod
     def from_error(cls, error_msg):
@@ -51,10 +51,35 @@ class Result():
         return r
 
     @classmethod
-    def from_plate(cls, number_id, distance=None):
+    def from_plate(cls, db, number_idx, distance=None):
         r = cls(ResultQuality.PLATE)
+
+        n = db.numbers[number_idx]
+        locality_id = n['locality_id']
+        street_id = n['street_id']
+        street = db.streets[street_id]
+
+        code_insee = street['code_insee']
+        city_arg = db.cities['code_insee'].searchsorted(code_insee)
+        city = db.cities[city_arg]
+        locality = db.localities[locality_id]
+        locality_name = locality['nom_ld'].decode('UTF-8')
+        if not locality_name:
+            r.number = int(n['number'])
+            r.street = street['nom_voie'].decode('UTF-8')
+            r.code_post = street['code_post'].decode('UTF-8')
+        else:
+            r.number = ''
+            r.street = ''
+            r.code_post = locality['code_post'].decode('UTF-8')
+        r.city = city['nom_commune'].decode('UTF-8')
+        r.code_insee = code_insee.decode('UTF-8')
+        r.lon = int_to_degree(n['lon'])
+        r.lat = int_to_degree(n['lat'])
+
         if distance:
             r.distance = round(distance, 2)  # precision to 1 cm
+
         return r
 
     @classmethod
@@ -77,78 +102,17 @@ class Result():
         r = cls(ResultQuality.ZIP)
         return r
 
+    def to_plain_address(self):
+        address = []
+        if self.locality:
+            address.append(self.locality)
+        elif self.street:
+            address.append(str(self.number) + ' ' + self.street)
+        address.append(self.code_post + ' ' + self.city)
+        address.append(self.country)
+        map(str.strip, address)
+        return address
+
     def to_address(self):
-        return self.__dict__()
-
-
-def to_plain_address(locality, number, street, code_post, city, country):
-    address = []
-    if locality:
-        address.append(locality)
-    elif street:
-        address.append(str(number) + ' ' + street)
-    address.append(code_post + ' ' + city)
-    address.append(country)
-    return address
-
-
-def to_address(db, idx, distance=None):
-    response = {
-        'locality': None,
-        'number': None,
-        'street': None,
-        'code_post': None,
-        'city': None,
-        'code_insee': None,
-        'country': None,
-        'lon': None,
-        'lat': None,
-        'text': None,
-        'distance': None,
-        'time': None,
-    }
-
-    if idx is None:
-        return response
-
-    n = db.numbers[idx]
-    locality_id = n['locality_id']
-    street_id = n['street_id']
-    street = db.streets[street_id]
-
-    code_insee = street['code_insee']
-    city_arg = db.cities['code_insee'].searchsorted(code_insee)
-    city = db.cities[city_arg]
-    locality = db.localities[locality_id]
-    locality_name = locality['nom_ld'].decode('UTF-8')
-    if not locality_name:
-        number = int(n['number'])
-        nom_voie = street['nom_voie'].decode('UTF-8')
-        code_post = street['code_post'].decode('UTF-8')
-    else:
-        number = ''
-        nom_voie = ''
-        code_post = locality['code_post'].decode('UTF-8')
-    nom_commune = city['nom_commune'].decode('UTF-8')
-    code_insee = code_insee.decode('UTF-8')
-    country = 'FRANCE'
-    lon = int_to_degree(n['lon'])
-    lat = int_to_degree(n['lat'])
-
-    response['locality'] = locality
-    response['number'] = number
-    response['street'] = nom_voie
-    response['code_post'] = code_post
-    response['city'] = nom_commune
-    response['code_insee'] = code_insee
-    response['country'] = country
-    response['lon'] = lon
-    response['lat'] = lat
-
-    if distance:
-        response['distance'] = round(distance, 2)
-
-    response['text'] = to_plain_address(locality, number, nom_voie, code_post,
-                                        nom_commune, country)
-
-    return response
+        self.text = self.to_plain_address()
+        return self.__dict__
