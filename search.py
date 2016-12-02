@@ -106,7 +106,6 @@ def search_insee(db, code_post, city):
 
 def search_by_insee(db, code_insee, query):
     query = unidecode(query)
-    result = None
     is_locality = False
     max_score = 0
     match_id = None
@@ -142,19 +141,52 @@ def search_by_insee(db, code_insee, query):
     if is_locality:
         result_idx = find_index(match_id, db.numbers_locality_index,
                                 db.numbers['locality_id'])
-        result = db.numbers_locality_index[result_idx]
+        n_idx = db.numbers_locality_index[result_idx]
+        return address.Result.from_plate(db, n_idx)
     elif number:
         n_idx = find(match_id, db.numbers['street_id'])
-        result = n_idx  # TODO + FIXME : improve by taking middle of the street
+        lo = None
+        hi = None
         while True:
             n = db.numbers[n_idx]
             if n['street_id'] != match_id:
                 break
             if n['number'] == number:
-                result = n_idx
+                return address.Result.from_plate(db, n_idx)
+            if n['number'] < number:
+                lo = n_idx
+            elif not hi:
+                hi = n_idx
+            n_idx += 1  # FIXME : check terminal condition !
+
+        # exact number was not found => interpolate address position
+        if not lo:
+            n = db.numbers[lo]
+            return address.Result.from_interpolated(db, number, match_id,
+                                                    n['lon'], n['lat'])
+        elif not hi:
+            n = db.numbers[hi]
+            return address.Result.from_interpolated(db, number, match_id,
+                                                    n['lon'], n['lat'])
+        else:
+            n_lo = db.numbers[lo]
+            n_hi = db.numbers[hi]
+            lon = (n_lo['lon'] + n_hi['lon']) // 2
+            lat = (n_lo['lat'] + n_hi['lat']) // 2
+            return address.Result.from_interpolated(db, number, match_id,
+                                                    lon, lat)
+    else:
+        # middle of the street
+        n_idx_lo = find(match_id, db.numbers['street_id'])
+        n_idx_hi = n_idx_lo
+        while True:
+            n = db.numbers[n_idx]
+            if n['street_id'] != match_id:
                 break
-            n_idx += 1
-    return address.Result.from_plate(db, result)
+            n_idx_hi = n_idx
+            n_idx += 1  # FIXME : check terminal condition !
+        n_idx = (n_idx_lo + n_idx_hi) // 2
+        return address.Result.from_street(db, n_idx)
 
 
 def search_by_zip_and_city(db, code_post, city, query):
@@ -163,15 +195,17 @@ def search_by_zip_and_city(db, code_post, city, query):
     code_insee = search_insee(db, code_post, city)
     if code_insee:
         result = search_by_insee(db, code_insee, query)
-    result = result.to_address()
-    result['time'] = time.time()-start
+    result.set_time(time.time()-start)
     return result
+
+
+import json
 
 
 if __name__ == '__main__':
     import main
     db = main.AddressDatabase()
-    print(search_by_zip_and_city(db, '75013', 'PARIS', '7 PLACE DE RUNGIS')['text'])
-    print(search_by_zip_and_city(db, '44300', 'Nantes', '41 rue de la cognardière')['text'])
-    print(search_by_zip_and_city(db, '58400', 'narcy', 'Le boisson')['text'])  # '58189',
-    print(search_by_zip_and_city(db, '78500', 'sartrouville', '10 Jules Ferry')['text'])  # '78586',
+    print(search_by_zip_and_city(db, '75013', 'PARIS', '7 PLACE DE RUNGIS').to_json())
+    print(search_by_zip_and_city(db, '44300', 'Nantes', 'rue de la cognardière').to_json())
+    print(search_by_zip_and_city(db, '58400', 'narcy', 'Le boisson').to_json())  # '58189',
+    print(search_by_zip_and_city(db, '78500', 'sartrouville', '10 Jules Ferry').to_json())  # '78586',

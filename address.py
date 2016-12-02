@@ -15,6 +15,8 @@ limitations under the License.
 """
 
 from enum import Enum
+import json
+
 from utils import int_to_degree
 
 
@@ -25,6 +27,13 @@ class ResultQuality(Enum):
     STREET = 3
     CITY = 4
     ZIP = 5
+
+
+class ResultQualityEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, ResultQuality):
+            return obj.value
+        return json.JSONEncoder.default(self, obj)
 
 
 class Result():
@@ -54,27 +63,7 @@ class Result():
     def from_plate(cls, db, number_idx, distance=None):
         r = cls(ResultQuality.PLATE)
 
-        n = db.numbers[number_idx]
-        locality_id = n['locality_id']
-        street_id = n['street_id']
-        street = db.streets[street_id]
-        code_insee = street['code_insee']
-        city_arg = db.cities['code_insee'].searchsorted(code_insee)
-        city = db.cities[city_arg]
-        locality = db.localities[locality_id]
-        locality_name = locality['nom_ld'].decode('UTF-8')
-        if not locality_name:
-            r.number = int(n['number'])
-            r.street = street['nom_voie'].decode('UTF-8')
-            r.code_post = street['code_post'].decode('UTF-8')
-        else:
-            r.number = ''
-            r.street = ''
-            r.code_post = locality['code_post'].decode('UTF-8')
-        r.city = city['nom_commune'].decode('UTF-8')
-        r.code_insee = code_insee.decode('UTF-8')
-        r.lon = int_to_degree(n['lon'])
-        r.lat = int_to_degree(n['lat'])
+        r.set_from_number(db, number_idx)
 
         if distance:
             r.distance = round(distance, 2)  # precision to 1 cm
@@ -82,13 +71,30 @@ class Result():
         return r
 
     @classmethod
-    def from_interpolated(cls, street_id, lon, lat):
+    def from_interpolated(cls, db, number, street_id, lon, lat):
         r = cls(ResultQuality.NUMBER)
+
+        street = db.streets[street_id]
+        code_insee = street['code_insee']
+        city_arg = db.cities['code_insee'].searchsorted(code_insee)
+        city = db.cities[city_arg]
+
+        r.number = int(number)
+        r.street = street['nom_voie'].decode('UTF-8')
+        r.code_post = street['code_post'].decode('UTF-8')
+        r.city = city['nom_commune'].decode('UTF-8')
+        r.code_insee = code_insee.decode('UTF-8')
+        r.lon = int_to_degree(lon)
+        r.lat = int_to_degree(lat)
+
         return r
 
     @classmethod
-    def from_street(cls, street_id, lon, lat):
+    def from_street(cls, db, number_idx):
         r = cls(ResultQuality.STREET)
+
+        r.set_from_number(db, number_idx)
+
         return r
 
     @classmethod
@@ -100,6 +106,32 @@ class Result():
     def from_code_post(cls, code_post, lon, lat):
         r = cls(ResultQuality.ZIP)
         return r
+
+    def set_time(self, time):
+        self.time = round(time, 6)
+
+    def set_from_number(self, db, number_idx):
+        n = db.numbers[number_idx]
+        locality_id = n['locality_id']
+        street_id = n['street_id']
+        street = db.streets[street_id]
+        code_insee = street['code_insee']
+        city_arg = db.cities['code_insee'].searchsorted(code_insee)
+        city = db.cities[city_arg]
+        locality = db.localities[locality_id]
+        locality_name = locality['nom_ld'].decode('UTF-8')
+        if not locality_name:
+            self.number = int(n['number'])
+            self.street = street['nom_voie'].decode('UTF-8')
+            self.code_post = street['code_post'].decode('UTF-8')
+        else:
+            self.number = ''
+            self.street = ''
+            self.code_post = locality['code_post'].decode('UTF-8')
+        self.city = city['nom_commune'].decode('UTF-8')
+        self.code_insee = code_insee.decode('UTF-8')
+        self.lon = int_to_degree(n['lon'])
+        self.lat = int_to_degree(n['lat'])
 
     def to_plain_address(self):
         address = []
@@ -115,3 +147,6 @@ class Result():
     def to_address(self):
         self.text = self.to_plain_address()
         return self.__dict__
+
+    def to_json(self):
+        return json.dumps(self.to_address(), cls=ResultQualityEncoder)
