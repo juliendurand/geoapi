@@ -94,6 +94,7 @@ class Result():
         r = cls(ResultQuality.STREET)
 
         r.set_from_number(db, number_idx)
+        r.number = ''
 
         return r
 
@@ -149,4 +150,5 @@ class Result():
         return self.__dict__
 
     def to_json(self):
-        return json.dumps(self.to_address(), cls=ResultQualityEncoder)
+        return json.dumps(self.to_address(), cls=ResultQualityEncoder,
+                          sort_keys=True, indent=4)
