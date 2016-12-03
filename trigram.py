@@ -15,10 +15,6 @@ limitations under the License.
 """
 
 
-def argsort(seq):
-    return sorted(range(len(seq)), key=seq.__getitem__)
-
-
 class Trigram():
 
     def __init__(self, s):
