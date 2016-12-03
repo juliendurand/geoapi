@@ -104,7 +104,10 @@ def search_insee(db, code_post, city):
     return cities[city]['code_insee'].decode('UTF-8') if city is not None else None
 
 
-def search_by_insee(db, code_insee, query):
+def search_by_insee(db, code_insee, code_post, query):
+
+    # TODO filter on zip to improve performance
+
     query = unidecode(query)
     is_locality = False
     max_score = 0
@@ -115,7 +118,8 @@ def search_by_insee(db, code_insee, query):
     street_pos_list = find_all_from_index(code_insee, db.streets_insee_index,
                                           db.streets['code_insee'],
                                           string=True)
-    streets = [db.streets[pos] for pos in street_pos_list]
+    streets = [db.streets[pos] for pos in street_pos_list if
+               db.streets[pos]['code_post'].decode('UTF-8') == code_post]
     names = [s['nom_voie'].decode('UTF-8') for s in streets]
     street, max_score = best_match(query, names)
 
@@ -135,7 +139,7 @@ def search_by_insee(db, code_insee, query):
         is_locality = True
 
     if not match_id:
-        return None  # TODO + FIXME : return city center
+        return address.Result.from_city(db, code_insee)
 
     if is_locality:
         result_idx = find_index(match_id, db.numbers_locality_index,
@@ -186,7 +190,9 @@ def search_by_zip_and_city(db, code_post, city, query):
     result = None
     code_insee = search_insee(db, code_post, city)
     if code_insee:
-        result = search_by_insee(db, code_insee, query)
+        result = search_by_insee(db, code_insee, code_post, query)
+    else:
+        result = address.from_error('Could not find the city of this address.')
     result.set_time(time.time()-start)
     return result
 
@@ -195,6 +201,6 @@ if __name__ == '__main__':
     import main
     db = main.AddressDatabase()
     print(search_by_zip_and_city(db, '75013', 'PARIS', '7 PLACE DE RUNGIS').to_json())
-    print(search_by_zip_and_city(db, '44300', 'Nantes', '39 rue de la cognardière').to_json())
+    print(search_by_zip_and_city(db, '44300', 'Nantes', '40 rue de la cognardière').to_json())
     print(search_by_zip_and_city(db, '58400', 'narcy', 'Le boisson').to_json())
-    print(search_by_zip_and_city(db, '78500', 'sartrouville', '10 Jules Ferry').to_json())
+    print(search_by_zip_and_city(db, '78500', 'sartrouville', '').to_json())

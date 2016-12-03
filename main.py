@@ -81,7 +81,9 @@ Address = (
 
 city_dtype = np.dtype([('code_insee', 'a5'),
                       ('code_post', 'a5'),
-                      ('nom_commune', 'a45')])
+                      ('nom_commune', 'a45'),
+                      ('lon', 'int32'),
+                      ('lat', 'int32')])
 
 street_dtype = np.dtype([('street_id', 'int32'),
                         ('code_insee', 'a5'),
@@ -116,7 +118,7 @@ def index_departement(departement, city_file, street_file, locality_file,
 
     print('Indexing : %s' % file)
 
-    cities = set()
+    cities = {}
     streets = {}
     localities = {}
     numbers = set()
@@ -165,9 +167,15 @@ def index_departement(departement, city_file, street_file, locality_file,
                 # TODO + FIXME : have a city id for cities with multiple code_post
                 city_key = hash(code_insee + ':' + code_post)
                 if city_key not in cities:
-                    cities.add(city_key)
-                    city_line = ','.join((code_insee, code_post, nom_commune,))
-                    city_file.write(city_line + '\n')
+                    cities[city_key] = {
+                        'code_insee': code_insee,
+                        'code_post': code_post,
+                        'nom_commune': nom_commune,
+                        'lon': [],
+                        'lat': [],
+                    }
+                cities[city_key]['lon'].append(float(lon))
+                cities[city_key]['lat'].append(float(lat))
 
                 street_key = hash(code_insee + ':' + code_post + ':' +
                                   nom_afnor)
@@ -204,6 +212,16 @@ def index_departement(departement, city_file, street_file, locality_file,
             except Exception as e:
                 nb_exceptions += 1
                 print(e)
+
+        for city_key, city in cities.items():
+            code_insee = city['code_insee']
+            code_post = city['code_post']
+            nom_commune = city['nom_commune']
+            lon = np.mean(city['lon'])
+            lat = np.mean(city['lat'])
+            city_line = ','.join((code_insee, code_post, nom_commune, str(lon),
+                                  str(lat)))
+            city_file.write(city_line + '\n')
         if duplicates:
             print("duplicates: ", duplicates)
         if nb_exceptions:
@@ -242,8 +260,10 @@ def process_csv_files():
 
 
 def city_factory(line):
-    code_insee, code_post, nom_commune = line[:-1].split(SEPARATOR)
-    return (code_insee, code_post, nom_commune,)
+    code_insee, code_post, nom_commune, lon, lat = line[:-1].split(SEPARATOR)
+    lon = utils.degree_to_int(float(lon))
+    lat = utils.degree_to_int(float(lat))
+    return (code_insee, code_post, nom_commune, lon, lat)
 
 
 def street_factory(line):
@@ -318,7 +338,6 @@ def index():
         os.mkdir(index_path)
 
     process_csv_files()
-
     create_db()
 
 

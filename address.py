@@ -99,13 +99,26 @@ class Result():
         return r
 
     @classmethod
-    def from_city(cls, code_insee, lon, lat):
+    def from_city(cls, db, code_insee, code_post=None):
         r = cls(ResultQuality.CITY)
+
+        city_arg = db.cities['code_insee'].searchsorted(code_insee)
+        city = db.cities[city_arg]
+
+        r.city = city['nom_commune'].decode('UTF-8')
+        r.code_insee = code_insee
+        r.code_post = code_post or city['code_post'].decode('UTF-8')
+        r.lon = int_to_degree(city['lon'])
+        r.lat = int_to_degree(city['lat'])
+
         return r
 
     @classmethod
     def from_code_post(cls, code_post, lon, lat):
         r = cls(ResultQuality.ZIP)
+
+        # TODO
+
         return r
 
     def set_time(self, time):
