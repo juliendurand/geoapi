@@ -19,14 +19,15 @@ class Trigram():
 
     def __init__(self, s):
         self.s = s
-        self.trigrams = [s[i:i+3] for i in range(0, len(s)-2)]
+        n = len(s)
+        self.trigrams = [s[max(0, i):min(n, i+3)] for i in range(-2, n)]
         self.trigrams_length = len(self.trigrams)
 
     def score(self, s):
-        n = len(s)-2
+        n = len(s)
         union = 0
-        for i in range(0, n):
-            x = s[i:i+3]
+        for i in range(-2, n):
+            x = s[max(0, i):min(n, i+3)]
             for c in self.trigrams:
                 if c == x:
                     union += 1

@@ -32,11 +32,11 @@ def degree_to_int(angle):
 
 
 def int_to_degree(value):
-    return float(value)/DEGREE_TO_INT_SCALE
+    return float(value) / DEGREE_TO_INT_SCALE
 
 
 def b_to_mb(bytes):
-    return float(bytes)/1024**2
+    return float(bytes) / 1024**2
 
 
 def count_file_lines(filename):
@@ -59,7 +59,7 @@ def haversine(lon1, lat1, lon2, lat2):
     # haversine formula
     dlon = lon2 - lon1
     dlat = lat2 - lat1
-    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
     c = 2 * asin(sqrt(a))
     m = 6367000 * c
     return m

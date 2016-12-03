@@ -42,7 +42,10 @@ def find_index(x, index, values, string=False):
     hi = len(index)
     while lo < hi:
         mid = (lo+hi)//2
-        midval = values[index[mid]]
+        idx = index[mid]
+        if (idx > 100000000):
+            print("IDX ERROR", lo, hi, mid, idx)
+        midval = values[idx]
         if string:
             midval = midval.decode('UTF-8')
         if midval < x:
@@ -67,16 +70,17 @@ def find_all_from_index(x, index, values, string=False):
 
 
 def best_match(query, items, min_score=0):
-    t = Trigram(query.upper())
     match = None
-    max_score = min_score
-    for i, item in enumerate(items):
-        score = t.score(item)
-        if score == 1.0:
-            return (i, 1.0,)
-        if score > max_score:
-            match = i
-            max_score = score
+    max_score = 0
+    if query:
+        t = Trigram(query.upper())
+        for i, item in enumerate(items):
+            score = t.score(item) if item else 0
+            if score == 1.0:
+                return (i, 1.0,)
+            if score > max_score and score > min_score:
+                match = i
+                max_score = score
     return (match, max_score,)
 
 
@@ -99,6 +103,13 @@ def search_insee(db, code_post, city):
     city_pos_list = find_all_from_index(code_post, db.cities_post_index,
                                         db.cities['code_post'], string=True)
     cities = [db.cities[pos] for pos in city_pos_list]
+    if len(cities) == 0:
+        lo = find_index(code_post[:2]+'000', db.cities_post_index,
+                        db.cities['code_post'], string=True)
+        hi = find_index(code_post[:2]+'999', db.cities_post_index,
+                        db.cities['code_post'], string=True)
+        cities = [db.cities[db.cities_post_index[idx]] for idx
+                  in range(lo, hi+1)]
     names = [c['nom_commune'].decode('UTF-8') for c in cities]
     city, max_score = best_match(city, names)
     return cities[city]['code_insee'].decode('UTF-8') if city is not None else None
@@ -192,7 +203,7 @@ def search_by_zip_and_city(db, code_post, city, query):
     if code_insee:
         result = search_by_insee(db, code_insee, code_post, query)
     else:
-        result = address.from_error('Could not find the city of this address.')
+        result = address.Result.from_error('Could not find the city of this address.')
     result.set_time(time.time()-start)
     return result
 
@@ -200,7 +211,9 @@ def search_by_zip_and_city(db, code_post, city, query):
 if __name__ == '__main__':
     import main
     db = main.AddressDatabase()
-    print(search_by_zip_and_city(db, '75013', 'PARIS', '7 PLACE DE RUNGIS').to_json())
-    print(search_by_zip_and_city(db, '44300', 'Nantes', '40 rue de la cognardière').to_json())
-    print(search_by_zip_and_city(db, '58400', 'narcy', 'Le boisson').to_json())
-    print(search_by_zip_and_city(db, '78500', 'sartrouville', '').to_json())
+    #print(search_by_zip_and_city(db, '75013', 'PARIS', '7 PLACE DE RUNGIS').to_json())
+    #print(search_by_zip_and_city(db, '44300', 'Nantes', '40 rue de la cognardière').to_json())
+    #print(search_by_zip_and_city(db, '58400', 'narcy', 'Le boisson').to_json())
+    #print(search_by_zip_and_city(db, '78500', 'sartrouville', '').to_json())
+    print(search_by_zip_and_city(db, '93152', 'LE BLANC MESNIL CEDEX', '15 AV CHARLES DE GAULLE',).to_json())
+

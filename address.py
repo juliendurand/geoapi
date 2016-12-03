@@ -65,6 +65,7 @@ class Result():
         r = cls(ResultQuality.PLATE)
 
         r.set_from_number(db, number_idx)
+        r.score = round(score, 4)
 
         if distance:
             r.distance = round(distance, 2)  # precision to 1 cm
@@ -140,8 +141,7 @@ class Result():
             self.street = street['nom_voie'].decode('UTF-8')
             self.code_post = street['code_post'].decode('UTF-8')
         else:
-            self.number = ''
-            self.street = ''
+            self.locality = locality['nom_ld'].decode('UTF-8')
             self.code_post = locality['code_post'].decode('UTF-8')
         self.city = city['nom_commune'].decode('UTF-8')
         self.code_insee = code_insee.decode('UTF-8')
