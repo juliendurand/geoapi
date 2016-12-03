@@ -145,7 +145,7 @@ def search_by_insee(db, code_insee, code_post, query):
         result_idx = find_index(match_id, db.numbers_locality_index,
                                 db.numbers['locality_id'])
         n_idx = db.numbers_locality_index[result_idx]
-        return address.Result.from_plate(db, n_idx)
+        return address.Result.from_plate(db, n_idx, max_score)
     elif number:
         n_idx = find(match_id, db.numbers['street_id'])
         lo = None
@@ -155,7 +155,7 @@ def search_by_insee(db, code_insee, code_post, query):
             if n['street_id'] != match_id:
                 break
             if n['number'] == number:
-                return address.Result.from_plate(db, n_idx)
+                return address.Result.from_plate(db, n_idx, max_score)
             if n['number'] < number:
                 lo = n_idx
             elif not hi:

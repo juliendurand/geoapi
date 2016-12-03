@@ -51,6 +51,7 @@ class Result():
         self.lon = ''
         self.lat = ''
         self.distance = ''
+        self.score = ''
         self.time = ''
 
     @classmethod
@@ -60,7 +61,7 @@ class Result():
         return r
 
     @classmethod
-    def from_plate(cls, db, number_idx, distance=None):
+    def from_plate(cls, db, number_idx, score, distance=None):
         r = cls(ResultQuality.PLATE)
 
         r.set_from_number(db, number_idx)

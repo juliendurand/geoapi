@@ -31,8 +31,3 @@ class Trigram():
                 if c == x:
                     union += 1
         return 2 * union / (n + self.trigrams_length)
-
-
-if __name__ == '__main__':
-    t = Trigram('rue de la connardiere')
-    print(t.score('chemin de la cognardiere'))
