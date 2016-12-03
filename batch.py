@@ -80,7 +80,7 @@ def batch2(db):
                     lon2 = float(address['lon'])
                     lat2 = float(address['lat'])
                     d = haversine(lon1, lat1, lon2, lat2)
-                error = math.log10(max(1, d))
+                error = d  # math.log10(max(1, d))
                 values += [
                     address['locality'],
                     address['number'],
@@ -103,8 +103,8 @@ def batch2(db):
             out.write(";".join(map(str, values)) + '\n')
             i += 1
             if i % 1000 == 0:
-                print(i, 'th ERROR: ', total_error/(i-1))
-        print('FINAL ERROR: ', total_error/(i-1))
+                print(i, 'th ERROR: ', round(total_error/(i-1), 2))
+        print('FINAL ERROR: ', round(total_error/(i-1), 2))
 
 
 if __name__ == '__main__':
