@@ -74,7 +74,7 @@ def best_match(query, items, min_score=0):
     match = None
     max_score = 0
     if query:
-        t = Trigram(query.upper())
+        t = Trigram(query)
         for i, item in enumerate(items):
             score = t.score(item) if item else 0
             if score == 1.0:
@@ -83,6 +83,12 @@ def best_match(query, items, min_score=0):
                 match = i
                 max_score = score
     return (match, max_score,)
+
+
+def clean_query(query):
+    query = query.replace(' BD ', ' BOULEVARD ')
+    query = query.replace(' AV ', ' AVENUE ')
+    return query
 
 
 def get_number(query):
@@ -118,6 +124,8 @@ def search_insee(db, code_post, city):
 
 def search_by_insee(db, code_insee_list, code_post, query):
     query = unidecode(query)
+    query = query.upper()
+    query = clean_query(query)
     is_locality = False
     max_score = 0
     match_id = None
@@ -160,10 +168,10 @@ def search_by_insee(db, code_insee_list, code_post, query):
         else:
             return address.Result.from_code_post(db, code_post)
 
-    return search_number(match_id, is_locality, number, max_score)
+    return search_number(db, match_id, is_locality, number, max_score)
 
 
-def search_number(match_id, is_locality, number, max_score):
+def search_number(db, match_id, is_locality, number, max_score):
     if is_locality:
         result_idx = find_index(match_id, db.numbers_locality_index,
                                 db.numbers['locality_id'])

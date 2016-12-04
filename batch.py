@@ -75,13 +75,15 @@ def batch2(db):
                 address = search.search_by_zip_and_city(db, code_post, city,
                                                         query).to_address()
                 d = 100000
-                if address['lon'] and address['lat'] and \
-                        values[31] and values[32]:
-                    lon1 = float(values[31])
-                    lat1 = float(values[32])
-                    lon2 = float(address['lon'])
-                    lat2 = float(address['lat'])
-                    d = haversine(lon1, lat1, lon2, lat2)
+                if values[31] and values[32]:
+                    if address['lon'] and address['lat']:
+                        lon1 = float(values[31])
+                        lat1 = float(values[32])
+                        lon2 = float(address['lon'])
+                        lat2 = float(address['lat'])
+                        d = haversine(lon1, lat1, lon2, lat2)
+                else:
+                    d = 0
                 error = d  # math.log10(max(1, d))
                 values += [
                     address['locality'],
@@ -121,5 +123,5 @@ def calculate_metrics():
 if __name__ == '__main__':
     db = main.AddressDatabase()
     # batch()
-    # batch2(db)
+    batch2(db)
     calculate_metrics()
