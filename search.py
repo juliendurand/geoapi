@@ -215,6 +215,10 @@ def search_by_zip_and_city(db, code_post, city, query):
     if code_insee:
         result = search_by_insee(db, [code_insee], code_post, query)
     else:
+        code_insee_list = find_all_from_index(db, code_post,
+                                              db.cities_post_index,
+                                              db.cities['code_post'])
+        print(code_insee_list)
         result = address.Result.from_error('Could not find the city of this address.')
     result.set_time(time.time()-start)
     return result
@@ -228,3 +232,4 @@ if __name__ == '__main__':
     print(search_by_zip_and_city(db, '58400', 'narcy', 'Le boisson').to_json())
     print(search_by_zip_and_city(db, '78500', 'sartrouville', '').to_json())
     print(search_by_zip_and_city(db, '93152', 'LE BLANC MESNIL CEDEX', '15 AV CHARLES DE GAULLE',).to_json())
+    print(search_by_zip_and_city(db, '13080', 'LUYNES', '685 CH DE LA COMMANDERIE DE  ST JEAN DE MALTES',).to_json())
