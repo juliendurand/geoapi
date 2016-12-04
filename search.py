@@ -215,11 +215,15 @@ def search_by_zip_and_city(db, code_post, city, query):
     if code_insee:
         result = search_by_insee(db, [code_insee], code_post, query)
     else:
-        code_insee_list = find_all_from_index(db, code_post,
-                                              db.cities_post_index,
-                                              db.cities['code_post'])
-        print(code_insee_list)
-        result = address.Result.from_error('Could not find the city of this address.')
+        code_insee_pos = find_all_from_index(code_post,
+                                             db.cities_post_index,
+                                             db.cities['code_post'],
+                                             string=True)
+        code_insee_list = [db.cities[pos]['code_insee'].decode('UTF-8') for pos in code_insee_pos]
+        if len(code_insee_list) > 0:
+            result = search_by_insee(db, code_insee_list, code_post, query)
+        else:
+            result = address.Result.from_error('Could not find the city for this address.')
     result.set_time(time.time()-start)
     return result
 
