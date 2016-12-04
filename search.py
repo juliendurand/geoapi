@@ -38,6 +38,17 @@ def find(x, values):
     return lo
 
 
+# TODO : is useful anymore ?
+def find_all(x, values):
+    pos = find(x, values)
+    size = values.size
+    while pos < size:
+        if values[pos] != x:
+            break
+        yield pos
+        pos += 1
+
+
 def find_index(x, index, values, string=False):
     lo = 0
     hi = len(index)
@@ -45,7 +56,7 @@ def find_index(x, index, values, string=False):
         mid = (lo+hi)//2
         idx = index[mid]
         if (idx > 100000000):
-            print("IDX ERROR", lo, hi, mid, idx)
+            print("IDX ERROR", x, lo, hi, mid, idx, string)
         midval = values[idx]
         if string:
             midval = midval.decode('UTF-8')
@@ -107,6 +118,9 @@ def get_repetition(query):
 
 
 def search_insee(db, code_post, city):
+    # print(db.cities_post_index.dtype)
+    #for i in range(0, 50):
+    #    print(db.cities_post_index[i])
     city_pos_list = find_all_from_index(code_post, db.cities_post_index,
                                         db.cities['code_post'], string=True)
     cities = [db.cities[pos] for pos in city_pos_list]
@@ -122,15 +136,7 @@ def search_insee(db, code_post, city):
     return cities[city]['code_insee'].decode('UTF-8') if city is not None else None
 
 
-def search_by_insee(db, code_insee_list, code_post, query):
-    query = unidecode(query)
-    query = query.upper()
-    query = clean_query(query)
-    is_locality = False
-    max_score = 0
-    match_id = None
-    number = get_number(query)
-
+def search_street(db, code_insee_list, code_post, query):
     # find street
     street_pos_list = []
     for code in code_insee_list:
@@ -139,14 +145,16 @@ def search_by_insee(db, code_insee_list, code_post, query):
                                                    db.streets['code_insee'],
                                                    string=True))
     street_pos_list = chain(*street_pos_list)
-    streets = [db.streets[pos] for pos in street_pos_list if
-               db.streets[pos]['code_post'].decode('UTF-8') == code_post]
+    streets = [db.streets[pos] for pos in street_pos_list] #if
+               #db.streets[pos]['code_post'].decode('UTF-8') == code_post]
     names = [s['nom_voie'].decode('UTF-8') for s in streets]
     street, max_score = best_match(query, names)
+    match_id = streets[street]['street_id'] if street else None
 
-    if street is not None:
-        match_id = streets[street]['street_id']
+    return (match_id, max_score,)
 
+
+def search_locality(db, code_insee_list, query, max_score):
     # find locality
     locality_pos_list = []
     for code in code_insee_list:
@@ -158,32 +166,44 @@ def search_by_insee(db, code_insee_list, code_post, query):
     localities = [db.localities[pos] for pos in locality_pos_list]
     names = [l['nom_ld'].decode('UTF-8') for l in localities]
     locality, max_score = best_match(query, names, min_score=max_score)
-    if locality is not None:
-        match_id = localities[locality]['locality_id']
-        is_locality = True
+    match_id = localities[locality]['locality_id'] if locality else None
 
-    if not match_id:
+    return (match_id, max_score,)
+
+
+def search_by_insee(db, code_insee_list, code_post, query):
+    query = unidecode(query)
+    query = query.upper()
+    query = clean_query(query)
+
+    number = get_number(query)
+
+    street_id, max_score = search_street(db, code_insee_list, code_post, query)
+    locality_id, max_score = search_locality(db, code_insee_list, query,
+                                             max_score)
+
+    if not street_id and not locality_id:
         if len(code_insee_list) == 1:
             return address.Result.from_city(db, code_insee_list[0])
         else:
             return address.Result.from_code_post(db, code_post)
 
-    return search_number(db, match_id, is_locality, number, max_score)
+    return search_number(db, street_id, locality_id, number, max_score)
 
 
-def search_number(db, match_id, is_locality, number, max_score):
-    if is_locality:
-        result_idx = find_index(match_id, db.numbers_locality_index,
+def search_number(db,  street_id, locality_id, number, max_score):
+    if locality_id:
+        result_idx = find_index(locality_id, db.numbers_locality_index,
                                 db.numbers['locality_id'])
         n_idx = db.numbers_locality_index[result_idx]
         return address.Result.from_plate(db, n_idx, max_score)
     elif number:
-        n_idx = find(match_id, db.numbers['street_id'])
+        n_idx = find(street_id, db.numbers['street_id'])
         lo = None
         hi = None
         while n_idx < db.numbers.size:
             n = db.numbers[n_idx]
-            if n['street_id'] != match_id:
+            if n['street_id'] != street_id:
                 break
             if n['number'] == number:
                 return address.Result.from_plate(db, n_idx, max_score)
@@ -196,20 +216,20 @@ def search_number(db, match_id, is_locality, number, max_score):
         # exact number was not found => interpolate address position
         if lo:
             n = db.numbers[lo]
-            return address.Result.from_interpolated(db, number, match_id,
+            return address.Result.from_interpolated(db, number, street_id,
                                                     n['lon'], n['lat'])
         else:
             n = db.numbers[hi]
-            return address.Result.from_interpolated(db, number, match_id,
+            return address.Result.from_interpolated(db, number, street_id,
                                                     n['lon'], n['lat'])
 
     else:
         # middle of the street
-        n_idx_hi = find(match_id, db.numbers['street_id'])
+        n_idx_hi = find(street_id, db.numbers['street_id'])
         n_idx_lo = n_idx_hi
         while n_idx_hi < db.numbers.size:
             n = db.numbers[n_idx_hi]
-            if n['street_id'] != match_id:
+            if n['street_id'] != street_id:
                 break
             n_idx_hi += 1
         n_idx = (n_idx_lo + n_idx_hi) // 2
@@ -239,9 +259,11 @@ def search_by_zip_and_city(db, code_post, city, query):
 if __name__ == '__main__':
     import main
     db = main.AddressDatabase()
-    print(search_by_zip_and_city(db, '75013', 'PARIS', '7 PLACE DE RUNGIS').to_json())
-    print(search_by_zip_and_city(db, '44300', 'Nantes', '40 rue de la cognardière').to_json())
-    print(search_by_zip_and_city(db, '58400', 'narcy', 'Le boisson').to_json())
-    print(search_by_zip_and_city(db, '78500', 'sartrouville', '').to_json())
-    print(search_by_zip_and_city(db, '93152', 'LE BLANC MESNIL CEDEX', '15 AV CHARLES DE GAULLE',).to_json())
-    print(search_by_zip_and_city(db, '13080', 'LUYNES', '685 CH DE LA COMMANDERIE DE  ST JEAN DE MALTES',).to_json())
+
+    print(search_by_zip_and_city(db, '33200', 'BORDEAUX', '303 BD DU PRESIDENT WILSON').to_json())
+    #print(search_by_zip_and_city(db, '75013', 'PARIS', '7 PLACE DE RUNGIS').to_json())
+    #print(search_by_zip_and_city(db, '44300', 'Nantes', '40 rue de la cognardière').to_json())
+    #print(search_by_zip_and_city(db, '58400', 'narcy', 'Le boisson').to_json())
+    #print(search_by_zip_and_city(db, '78500', 'sartrouville', '').to_json())
+    #print(search_by_zip_and_city(db, '93152', 'LE BLANC MESNIL CEDEX', '15 AV CHARLES DE GAULLE',).to_json())
+    #print(search_by_zip_and_city(db, '13080', 'LUYNES', '685 CH DE LA COMMANDERIE DE  ST JEAN DE MALTES',).to_json())

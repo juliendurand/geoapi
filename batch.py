@@ -60,12 +60,10 @@ def batch2(db):
     total_error = 0
     with open(in_file, 'r') as addresses, \
             open(out_file, 'w') as out:
-        i = 0
-        for line in addresses:
+        for i, line in enumerate(addresses):
             line = line[:-1].replace('"', '')
             if i == 0:
                 out.write(line+';locality;number;street;code_post;city;code_insee;country;quality;distance;error;lon;lat;time\n')
-                i = 1
                 continue
             values = line.split(';')
             try:
@@ -84,7 +82,9 @@ def batch2(db):
                         d = haversine(lon1, lat1, lon2, lat2)
                 else:
                     d = 0
-                error = d  # math.log10(max(1, d))
+                if d == 100000:
+                    print(i)
+                error = d
                 values += [
                     address['locality'],
                     address['number'],
@@ -105,7 +105,6 @@ def batch2(db):
                 print(e)
                 traceback.print_exc()
             out.write(";".join(map(str, values)) + '\n')
-            i += 1
             if i % 1000 == 0:
                 print(i, 'th ERROR: ', round(total_error/(i-1), 2))
         print('FINAL ERROR: ', round(total_error/(i-1), 2))
@@ -118,6 +117,7 @@ def calculate_metrics():
     print(metrics)
     timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     metrics.to_csv('data/metrics/metrics %s.csv' % timestamp)
+    df[(df['error'] > 1000) & (df['quality'] == 2)].to_csv('data/big_error.csv')
 
 
 if __name__ == '__main__':
