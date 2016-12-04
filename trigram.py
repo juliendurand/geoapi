@@ -31,4 +31,4 @@ class Trigram():
             for c in self.trigrams:
                 if c == x:
                     union += 1
-        return 2 * union / (n + self.trigrams_length)
+        return 2 * union / (n + self.trigrams_length + 4)
