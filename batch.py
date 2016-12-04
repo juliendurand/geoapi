@@ -117,7 +117,16 @@ def calculate_metrics():
     print(metrics)
     timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     metrics.to_csv('data/metrics/metrics %s.csv' % timestamp)
-    df[(df['error'] > 1000) & (df['quality'] == 2)].to_csv('data/big_error.csv')
+    metrics = df.groupby(['quality', 'STACOORD'])['error'].agg(['count', 'sum', 'mean', 'std','min','median', 'max' ])
+    metrics.to_csv('data/metrics/metrics_detailed %s.csv' % timestamp)
+    print(df[df['quality'] == 1]['error'].describe())
+    print(df.groupby(['STACOORD'])['error'].agg(['count', 'sum', 'mean', 'std','min','median', 'max' ]))
+
+
+def save_big_error():
+    out_file = 'data/adresses_vAMABIS_v28092016_out_v2_geocoding_julien.csv'
+    df = pd.read_csv(out_file, delimiter=';')
+    df[df['error'] > 1000].to_csv('data/big_error.csv')
 
 
 if __name__ == '__main__':
@@ -125,3 +134,4 @@ if __name__ == '__main__':
     # batch()
     batch2(db)
     calculate_metrics()
+    save_big_error()

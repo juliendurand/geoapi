@@ -178,6 +178,7 @@ def search_by_insee(db, code_insee_list, code_post, query):
     query = clean_query(query)
 
     number = get_number(query)
+    query = query.replace(str(number), '').strip()
 
     street_id, score_street = search_street(db, code_insee_list, code_post,
                                             query)
