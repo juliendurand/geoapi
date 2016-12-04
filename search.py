@@ -16,6 +16,7 @@ limitations under the License.
 
 
 import re
+from itertools import chain
 import time
 
 from unidecode import unidecode
@@ -115,10 +116,7 @@ def search_insee(db, code_post, city):
     return cities[city]['code_insee'].decode('UTF-8') if city is not None else None
 
 
-def search_by_insee(db, code_insee, code_post, query):
-
-    # TODO filter on zip to improve performance
-
+def search_by_insee(db, code_insee_list, code_post, query):
     query = unidecode(query)
     is_locality = False
     max_score = 0
@@ -126,9 +124,13 @@ def search_by_insee(db, code_insee, code_post, query):
     number = get_number(query)
 
     # find street
-    street_pos_list = find_all_from_index(code_insee, db.streets_insee_index,
-                                          db.streets['code_insee'],
-                                          string=True)
+    street_pos_list = []
+    for code in code_insee_list:
+        street_pos_list.append(find_all_from_index(code,
+                                                   db.streets_insee_index,
+                                                   db.streets['code_insee'],
+                                                   string=True))
+    street_pos_list = chain(*street_pos_list)
     streets = [db.streets[pos] for pos in street_pos_list if
                db.streets[pos]['code_post'].decode('UTF-8') == code_post]
     names = [s['nom_voie'].decode('UTF-8') for s in streets]
@@ -138,10 +140,13 @@ def search_by_insee(db, code_insee, code_post, query):
         match_id = streets[street]['street_id']
 
     # find locality
-    locality_pos_list = find_all_from_index(code_insee,
-                                            db.localities_insee_index,
-                                            db.localities['code_insee'],
-                                            string=True)
+    locality_pos_list = []
+    for code in code_insee_list:
+        locality_pos_list.append(find_all_from_index(code,
+                                                     db.localities_insee_index,
+                                                     db.localities['code_insee'],
+                                                     string=True))
+    locality_pos_list = chain(*locality_pos_list)
     localities = [db.localities[pos] for pos in locality_pos_list]
     names = [l['nom_ld'].decode('UTF-8') for l in localities]
     locality, max_score = best_match(query, names, min_score=max_score)
@@ -150,8 +155,15 @@ def search_by_insee(db, code_insee, code_post, query):
         is_locality = True
 
     if not match_id:
-        return address.Result.from_city(db, code_insee)
+        if len(code_insee_list) == 1:
+            return address.Result.from_city(db, code_insee_list[0])
+        else:
+            return address.Result.from_code_post(db, code_post)
 
+    return search_number(match_id, is_locality, number, max_score)
+
+
+def search_number(match_id, is_locality, number, max_score):
     if is_locality:
         result_idx = find_index(match_id, db.numbers_locality_index,
                                 db.numbers['locality_id'])
@@ -191,7 +203,7 @@ def search_by_insee(db, code_insee, code_post, query):
             n = db.numbers[n_idx_hi]
             if n['street_id'] != match_id:
                 break
-            n_idx_hi += 1  # FIXME : check terminal condition !
+            n_idx_hi += 1
         n_idx = (n_idx_lo + n_idx_hi) // 2
         return address.Result.from_street(db, n_idx)
 
@@ -201,7 +213,7 @@ def search_by_zip_and_city(db, code_post, city, query):
     result = None
     code_insee = search_insee(db, code_post, city)
     if code_insee:
-        result = search_by_insee(db, code_insee, code_post, query)
+        result = search_by_insee(db, [code_insee], code_post, query)
     else:
         result = address.Result.from_error('Could not find the city of this address.')
     result.set_time(time.time()-start)
@@ -211,9 +223,8 @@ def search_by_zip_and_city(db, code_post, city, query):
 if __name__ == '__main__':
     import main
     db = main.AddressDatabase()
-    #print(search_by_zip_and_city(db, '75013', 'PARIS', '7 PLACE DE RUNGIS').to_json())
-    #print(search_by_zip_and_city(db, '44300', 'Nantes', '40 rue de la cognardière').to_json())
-    #print(search_by_zip_and_city(db, '58400', 'narcy', 'Le boisson').to_json())
-    #print(search_by_zip_and_city(db, '78500', 'sartrouville', '').to_json())
+    print(search_by_zip_and_city(db, '75013', 'PARIS', '7 PLACE DE RUNGIS').to_json())
+    print(search_by_zip_and_city(db, '44300', 'Nantes', '40 rue de la cognardière').to_json())
+    print(search_by_zip_and_city(db, '58400', 'narcy', 'Le boisson').to_json())
+    print(search_by_zip_and_city(db, '78500', 'sartrouville', '').to_json())
     print(search_by_zip_and_city(db, '93152', 'LE BLANC MESNIL CEDEX', '15 AV CHARLES DE GAULLE',).to_json())
-

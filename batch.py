@@ -1,5 +1,7 @@
-import math
+from datetime import datetime
 import traceback
+
+import pandas as pd
 
 import main
 import search
@@ -107,7 +109,17 @@ def batch2(db):
         print('FINAL ERROR: ', round(total_error/(i-1), 2))
 
 
+def calculate_metrics():
+    out_file = 'data/adresses_vAMABIS_v28092016_out_v2_geocoding_julien.csv'
+    df = pd.read_csv(out_file, delimiter=';')
+    metrics = df.groupby('quality')['error'].agg(['count', 'sum', 'mean', 'std','min','median', 'max' ])
+    print(metrics)
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+    metrics.to_csv('data/metrics/metrics %s.csv' % timestamp)
+
+
 if __name__ == '__main__':
     db = main.AddressDatabase()
     # batch()
-    batch2(db)
+    # batch2(db)
+    calculate_metrics()

@@ -116,10 +116,11 @@ class Result():
         return r
 
     @classmethod
-    def from_code_post(cls, code_post, lon, lat):
+    def from_code_post(cls, code_post):
         r = cls(ResultQuality.ZIP)
 
-        # TODO
+        r.code_post = code_post
+        # TODO return lon and lat
 
         return r
 
