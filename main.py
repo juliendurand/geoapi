@@ -378,22 +378,5 @@ class AddressDatabase:
 
 
 if __name__ == '__main__':
-    # TODO remoove
-    #if len(sys.argv) > 1:
-    #    if sys.argv[1] == 'index':
     print('indexing')
-    #index()
-    print('Loading cities.')
-    cities = np.memmap(city_db_path, dtype=city_dtype)
-    print('Loading streets.')
-    streets = np.memmap(street_db_path, dtype=street_dtype)
-    print('Loading localities.')
-    localities = np.memmap(locality_db_path, dtype=locality_dtype)
-    print('Loading numbers.')
-    numbers = np.memmap(number_db_path, dtype=number_dtype)
-
-    create_np_index(cities, 'code_post', cities_post_index_path)
-    create_np_index(streets, 'code_insee', streets_insee_index_path)
-    create_np_index(localities, 'code_insee', localities_insee_index_path)
-    create_np_index(numbers, 'locality_id', numbers_locality_index_path)
-    create_np_index(numbers, 'geohash', numbers_geohash_index_path)
+    index()
