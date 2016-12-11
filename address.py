@@ -17,7 +17,7 @@ limitations under the License.
 from enum import Enum
 import json
 
-from utils import int_to_degree
+from utils import int_to_degree, reverse_geohash
 
 
 class ResultQuality(Enum):
@@ -146,8 +146,9 @@ class Result():
             self.code_post = locality['code_post'].decode('UTF-8')
         self.city = city['nom_commune'].decode('UTF-8')
         self.code_insee = code_insee.decode('UTF-8')
-        self.lon = int_to_degree(n['lon'])
-        self.lat = int_to_degree(n['lat'])
+        lon, lat = reverse_geohash(n['geohash'])
+        self.lon = lon
+        self.lat = lat
 
     def to_plain_address(self):
         address = []

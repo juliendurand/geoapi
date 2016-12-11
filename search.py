@@ -23,6 +23,7 @@ from unidecode import unidecode
 
 import address
 from trigram import Trigram
+from utils import reverse_geohash
 
 
 def find(x, values):
@@ -218,14 +219,15 @@ def search_number(db,  street_id, locality_id, number, max_score):
             n_idx += 1
 
         # exact number was not found => interpolate address position
+        lon, lat = reverse_geohash(n['geohash'])
         if lo:
             n = db.numbers[lo]
             return address.Result.from_interpolated(db, number, street_id,
-                                                    n['lon'], n['lat'])
+                                                    lon, lat)
         else:
             n = db.numbers[hi]
             return address.Result.from_interpolated(db, number, street_id,
-                                                    n['lon'], n['lat'])
+                                                    lon, lat)
 
     else:
         # middle of the street

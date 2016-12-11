@@ -43,6 +43,7 @@ cities_post_index_path = 'index/cities_post_index.dat'
 streets_insee_index_path = 'index/streets_insee_index.dat'
 localities_insee_index_path = 'index/localities_insee_index.dat'
 numbers_locality_index_path = 'index/numbers_locality_index.dat'
+numbers_geohash_index_path = 'index/numbers_geohash_index.dat'
 
 repetition_ref_path = 'index/repetitions.json'
 
@@ -100,8 +101,7 @@ number_dtype = np.dtype([('street_id', 'int32'),
                         ('locality_id', 'int32'),
                         ('number', 'int16'),
                         ('rep', 'int8'),
-                        ('lon', 'int32'),
-                        ('lat', 'int32')])
+                        ('geohash', 'uint64')])
 
 #
 # Index
@@ -287,7 +287,8 @@ def number_factory(line):
         raise Exception('Error : numero overflows 16bits')
     lon = utils.degree_to_int(float(lon))
     lat = utils.degree_to_int(float(lat))
-    return (street_id, locality_id, numero, rep, float(lon), float(lat),)
+    return (street_id, locality_id, numero, rep,
+            utils.geohash(float(lon), float(lat)),)
 
 
 def create_np_table(in_filename, dtype, factory, out_filename, sort=None):
@@ -331,6 +332,7 @@ def create_db():
     create_np_index(streets, 'code_insee', streets_insee_index_path)
     create_np_index(localities, 'code_insee', localities_insee_index_path)
     create_np_index(numbers, 'locality_id', numbers_locality_index_path)
+    create_np_index(numbers, 'geohash', numbers_geohash_index_path)
 
 
 def index():
@@ -370,11 +372,16 @@ class AddressDatabase:
         self.numbers_locality_index = np.memmap(numbers_locality_index_path+'.npy',
                                                 dtype='int32')
 
+        print('Loading number_geohash_index.')
+        self.numbers_locality_index = np.memmap(numbers_geohash_index_path+'.npy',
+                                                dtype='int32')
+
         print('Database loaded.')
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        if sys.argv[1] == 'index':
-            print('indexing')
-            index()
+    # TODO remoove
+    #if len(sys.argv) > 1:
+    #    if sys.argv[1] == 'index':
+        print('indexing')
+        index()
