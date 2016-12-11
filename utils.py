@@ -47,7 +47,6 @@ def geohash(lon, lat):
 
 def reverse_geohash(h):
     h = bin(h)[2:].zfill(64)
-    print(h)
     lon = int_to_degree(int(h[::2], 2)) - 180
     lat = int_to_degree(int(h[1::2], 2)) - 90
     return lon, lat
@@ -87,6 +86,11 @@ if __name__ == '__main__':
     import numpy as np
     lon = 2.155987
     lat = 48.935757
+
+    for i in range(1000):
+        h = geohash(lon, lat)
+        h = np.uint64(h)
+        reverse_geohash(h)
 
     print(lon, lat)
     h = geohash(lon, lat)
