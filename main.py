@@ -157,11 +157,11 @@ def index_departement(departement, city_file, street_file, locality_file,
                     raise Exception('Invalid nom_commune : "%s"' % nom_commune)
 
                 lon = values[13]
-                if not -180 < float(lon) < 180:
+                if not -180 <= float(lon) <= 180:
                     raise Exception('Invalid lon : "%s"' % lon)
 
                 lat = values[14]
-                if not -90 < float(lat) < 90:
+                if not -90 <= float(lat) <= 90:
                     raise Exception('Invalid lat : "%s"' % lat)
 
                 # TODO + FIXME : have a city id for cities with multiple code_post
@@ -285,8 +285,6 @@ def number_factory(line):
     numero = utils.safe_cast(numero, int, -1)  # fixme
     if numero > 2**16 - 1:
         raise Exception('Error : numero overflows 16bits')
-    lon = utils.degree_to_int(float(lon))
-    lat = utils.degree_to_int(float(lat))
     return (street_id, locality_id, numero, rep,
             utils.geohash(float(lon), float(lat)),)
 
@@ -373,7 +371,7 @@ class AddressDatabase:
                                                 dtype='int32')
 
         print('Loading number_geohash_index.')
-        self.numbers_locality_index = np.memmap(numbers_geohash_index_path+'.npy',
+        self.numbers_geohash_index = np.memmap(numbers_geohash_index_path+'.npy',
                                                 dtype='int32')
 
         print('Database loaded.')
@@ -383,5 +381,19 @@ if __name__ == '__main__':
     # TODO remoove
     #if len(sys.argv) > 1:
     #    if sys.argv[1] == 'index':
-        print('indexing')
-        index()
+    print('indexing')
+    #index()
+    print('Loading cities.')
+    cities = np.memmap(city_db_path, dtype=city_dtype)
+    print('Loading streets.')
+    streets = np.memmap(street_db_path, dtype=street_dtype)
+    print('Loading localities.')
+    localities = np.memmap(locality_db_path, dtype=locality_dtype)
+    print('Loading numbers.')
+    numbers = np.memmap(number_db_path, dtype=number_dtype)
+
+    create_np_index(cities, 'code_post', cities_post_index_path)
+    create_np_index(streets, 'code_insee', streets_insee_index_path)
+    create_np_index(localities, 'code_insee', localities_insee_index_path)
+    create_np_index(numbers, 'locality_id', numbers_locality_index_path)
+    create_np_index(numbers, 'geohash', numbers_geohash_index_path)

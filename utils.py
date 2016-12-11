@@ -27,9 +27,7 @@ def safe_cast(val, to_type, default=None):
         return default or to_type()
 
 
-def degree_to_int(angle, safe=True):
-    if safe:
-        return int(angle*DEGREE_TO_INT_SCALE) if -180 <= angle <= 180 else 0  # FIXME
+def degree_to_int(angle):
     return int(angle*DEGREE_TO_INT_SCALE)
 
 
@@ -38,11 +36,12 @@ def int_to_degree(value):
 
 
 def geohash(lon, lat):
-    lon = degree_to_int(lon + 180, safe=False)
+    lon = degree_to_int(lon + 180)
     lat = degree_to_int(lat + 90)
-    lon = bin(lon)[2:].zfill(32)
-    lat = bin(lat)[2:].zfill(32)
-    return int(''.join([val for pair in zip(lon, lat) for val in pair]), 2)
+    lonbin = bin(lon)[2:].zfill(32)
+    latbin = bin(lat)[2:].zfill(32)
+    b = ''.join([val for pair in zip(lonbin, latbin) for val in pair])
+    return int(b, 2)
 
 
 def reverse_geohash(h):
@@ -80,20 +79,3 @@ def haversine(lon1, lat1, lon2, lat2):
     c = 2 * asin(sqrt(a))
     m = 6367000 * c
     return m
-
-if __name__ == '__main__':
-    # TODO Remove : test only
-    import numpy as np
-    lon = 2.155987
-    lat = 48.935757
-
-    for i in range(1000):
-        h = geohash(lon, lat)
-        h = np.uint64(h)
-        reverse_geohash(h)
-
-    print(lon, lat)
-    h = geohash(lon, lat)
-    h = np.uint64(h)
-    print(h)
-    print(*reverse_geohash(h))

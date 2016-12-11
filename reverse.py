@@ -14,47 +14,43 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-import numpy as np
-from scipy.spatial import KDTree
-
-from utils import degree_to_int, int_to_degree, haversine
-from address import to_address
-
-
-def kd_tree_index(db):
-    data = np.dstack((db.numbers['lon'], db.numbers['lat']))[0]
-    kd_tree = KDTree(data, leafsize=10000)
-    return kd_tree
+from utils import haversine
+from address import Result
+from search import find_index
+from utils import geohash, reverse_geohash
 
 
-def reverse(kd_tree, db, lon, lat):
-    # /!\ euclidean distance
-    d, idx = kd_tree.query([[degree_to_int(lon), degree_to_int(lat)]], k=10)
-
-    # calculate haversine distance to get the real orthonormic distance
-    results = {}
-    for hyp in idx[0]:
-        pos = db.numbers[hyp]
-        hlon = int_to_degree(pos['lon'])
-        hlat = int_to_degree(pos['lat'])
+def reverse(db, lon, lat):
+    min_distance = 50000000  # bigger than Earth's circumference
+    match = None
+    h = geohash(lon, lat)
+    arg = find_index(h, db.numbers_geohash_index, db.numbers['geohash'])
+    k = 100  # k-nearest
+    lo = max(0, arg - k//2)
+    hi = min(db.numbers_geohash_index.size, arg + k//2)
+    for hyp in db.numbers_geohash_index[lo:hi]:
+        hlon, hlat = reverse_geohash(db.numbers[hyp]['geohash'])
+        # Calculate haversine distance to get the real orthonormic distance
         d = haversine(hlon, hlat, lon, lat)
-        results[d] = hyp
-    idx = sorted(results)[0]
-    return to_address(db, results[idx], idx)
+        if d < min_distance:
+            min_distance = d
+            match = hyp
+    return Result.from_plate(db, match, 0, distance=min_distance)
 
 
 if __name__ == '__main__':
     import main
     db = main.AddressDatabase()
-    kd_tree = kd_tree_index(db)
     # in_file = 'data/adresses_vAMABIS_v28092016_out_v2.csv'
     in_file = 'data/ADRESSES_PART_GEO_AMABIS_v01072016_out.csv'
-    with open(in_file, 'r') as addresses:
+    out_file = 'data/ADRESSES_PART_GEO_AMABIS_v01072016_out_reverse_julien.csv'
+    with open(in_file, 'r') as addresses, open(out_file, 'w') as out:
         i = 0
+        d = 0
         for line in addresses:
             line = line[:-1]
             if i == 0:
-                print(line+';locality;number;street;code_post;city;code_insee;country;distance;lon;lat;')
+                out.write(line+';locality;number;street;code_post;city;code_insee;country;distance;lon;lat;\n')
                 i = 1
                 continue
             address = {
@@ -69,12 +65,12 @@ if __name__ == '__main__':
                 'lat': '',
             }
             values = line[:-1].replace('"', '').split(';')
-            print(values[32], values[33])
+            # print(values[32], values[33])
             try:
 
                 lon = float(values[32])
                 lat = float(values[33])
-                address = reverse(kd_tree, db, lon, lat)
+                address = reverse(db, lon, lat).to_address()
                 values += [
                     address['locality'],
                     address['number'],
@@ -87,6 +83,10 @@ if __name__ == '__main__':
                     address['lon'],
                     address['lat'],
                     ]
-            except:
-                pass
-            print(";".join(map(str, values)))
+                d += address['distance']
+            except Exception as e:
+                print(e)
+            out.write(";".join(map(str, values))+'\n')
+            i += 1
+        print(i, ' lines')
+        print(d/i, ' mean distance')

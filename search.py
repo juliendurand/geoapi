@@ -39,7 +39,7 @@ def find(x, values):
     return lo
 
 
-# TODO : is useful anymore ?
+# TODO : remove because not useful anymore
 def find_all(x, values):
     pos = find(x, values)
     size = values.size
