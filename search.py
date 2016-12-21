@@ -131,7 +131,8 @@ def search_insee(db, code_post, city):
                   in range(lo, hi+1)]
     names = [c['nom_commune'].decode('UTF-8') for c in cities]
     city, max_score = best_match(city, names)
-    return cities[city]['code_insee'].decode('UTF-8') if city else None
+    return cities[city]['code_insee'].decode('UTF-8') if city is not None \
+        else None
 
 
 def search_street(db, code_insee_list, code_post, query):
@@ -147,8 +148,7 @@ def search_street(db, code_insee_list, code_post, query):
     streets = [db.streets[pos] for pos in street_pos_list]
     names = [s['nom_voie'].decode('UTF-8') for s in streets]
     street, max_score = best_match(query, names, min_score=min_score)
-    match_id = streets[street]['street_id'] if street else None
-
+    match_id = streets[street]['street_id'] if street is not None else None
     return (match_id, max_score,)
 
 
@@ -165,7 +165,8 @@ def search_locality(db, code_insee_list, query, min_score):
     localities = [db.localities[pos] for pos in locality_pos_list]
     names = [l['nom_ld'].decode('UTF-8') for l in localities]
     locality, max_score = best_match(query, names, min_score=min_score)
-    match_id = localities[locality]['locality_id'] if locality else None
+    match_id = localities[locality]['locality_id'] if locality is not None \
+        else None
 
     return (match_id, max_score,)
 
@@ -275,4 +276,5 @@ if __name__ == '__main__':
 #    print(search_by_zip_and_city(db, '93152', 'LE BLANC MESNIL CEDEX', '15 AV CHARLES DE GAULLE',).to_json())
 #    print(search_by_zip_and_city(db, '13080', 'LUYNES', '685 CH DE LA COMMANDERIE DE  ST JEAN DE MALTES',).to_json())
 #    print(search_by_zip_and_city(db, '60800', 'TRUMILLY', 'LE PLESSIS CORNEFROY 3 RUE DE BEAURAIN',).to_json())
-    print(search_by_zip_and_city(db, '75116', 'PARIS', '198 AV VICTOR HUGO',).to_json())
+#    print(search_by_zip_and_city(db, '75116', 'PARIS', '198 AV VICTOR HUGO',).to_json())
+#    print(search_by_zip_and_city(db, '75015', 'PARIS', '140 RUE SAINT CHARLES',).to_json())
