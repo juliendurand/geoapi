@@ -163,7 +163,6 @@ def index_departement(departement, city_file, street_file, locality_file,
                 if not -90 <= float(lat) <= 90:
                     raise Exception('Invalid lat : "%s"' % lat)
 
-                # TODO + FIXME : have a city id for cities with multiple code_post
                 city_key = hash(code_insee + ':' + code_post)
                 if city_key not in cities:
                     cities[city_key] = {
@@ -201,10 +200,12 @@ def index_departement(departement, city_file, street_file, locality_file,
                     repetitions[rep] = repetition_key
                 rep = repetitions[rep]
 
-                number_key = hash(street_id + ':' + locality_id + ':' + numero + ':' + rep)
+                number_key = hash(street_id + ':' + locality_id + ':' +
+                                  numero + ':' + rep)
                 if number_key not in numbers:
                     numbers.add(number_key)
-                    number_line = ','.join((street_id, locality_id, numero, rep, lon, lat,))
+                    number_line = ','.join((street_id, locality_id, numero,
+                                            rep, lon, lat,))
                     number_file.write(number_line + '\n')
                 else:
                     duplicates += 1
@@ -333,6 +334,10 @@ def create_db():
     create_np_index(numbers, 'geohash', numbers_geohash_index_path)
 
 
+def load_data(file_path, dtype='int32'):
+    return np.memmap(file_path, dtype=dtype)
+
+
 def index():
     if not os.path.exists(index_path):
         os.mkdir(index_path)
@@ -345,24 +350,19 @@ class AddressDatabase:
 
     def __init__(self):
         # data tables
-        self.cities = np.memmap(city_db_path, dtype=city_dtype)
-        self.streets = np.memmap(street_db_path, dtype=street_dtype)
-        self.localities = np.memmap(locality_db_path, dtype=locality_dtype)
-        self.numbers = np.memmap(number_db_path, dtype=number_dtype)
+        self.cities = load_data(city_db_path, dtype=city_dtype)
+        self.streets = load_data(street_db_path, dtype=street_dtype)
+        self.localities = load_data(locality_db_path, dtype=locality_dtype)
+        self.numbers = load_data(number_db_path, dtype=number_dtype)
 
         # indices
-        self.cities_post_index = np.memmap(cities_post_index_path,
-                                           dtype='int32')
-        self.streets_insee_index = np.memmap(streets_insee_index_path,
-                                             dtype='int32')
-        self.localities_insee_index = np.memmap(localities_insee_index_path,
-                                                dtype='int32')
-        self.numbers_locality_index = np.memmap(numbers_locality_index_path,
-                                                dtype='int32')
-        self.numbers_geohash_index = np.memmap(numbers_geohash_index_path,
-                                               dtype='int32')
+        self.cities_post_index = load_data(cities_post_index_path)
+        self.streets_insee_index = load_data(streets_insee_index_path)
+        self.localities_insee_index = load_data(localities_insee_index_path)
+        self.numbers_locality_index = load_data(numbers_locality_index_path)
+        self.numbers_geohash_index = load_data(numbers_geohash_index_path)
 
 
 if __name__ == '__main__':
     print('indexing')
-    create_db()
+    index()

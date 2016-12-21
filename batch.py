@@ -13,13 +13,14 @@ def batch(db):
     in_file = 'data/ADRESSES_PART_GEO_AMABIS_v01072016_out.csv'
     out_file = 'data/ADRESSES_PART_GEO_AMABIS_v01072016_geocoding_julien.csv'
     total_error = 0
-    with open(in_file, 'r',encoding='UTF-8') as addresses, \
-            open(out_file, 'w',encoding='UTF-8') as out:
-        
+    with open(in_file, 'r', encoding='UTF-8') as addresses, \
+            open(out_file, 'w', encoding='UTF-8') as out:
+
         for i, line in enumerate(addresses):
             line = line[:-1].replace('"', '')
             if i == 0:
-                out.write(line+';locality;number;street;code_post;city;code_insee;country;quality;distance;error;lon;lat;time\n')
+                out.write(line+';locality;number;street;code_post;city;\
+code_insee;country;quality;distance;error;lon;lat;time\n')
                 continue
             values = line.split(';')
             try:
@@ -27,7 +28,7 @@ def batch(db):
                 city = values[6]
                 query = values[3] or values[2] or values[1]
                 address = search.search_by_zip_and_city(db, code_post, city,
-                                                      query).to_address()
+                                                        query).to_address()
                 d = 100000
                 if values[32] and values[33]:
                     if address['lon'] and address['lat']:
@@ -71,12 +72,13 @@ def batch2(db):
     in_file = 'data/adresses_vAMABIS_v28092016_out_v2.csv'
     out_file = 'data/adresses_vAMABIS_v28092016_out_v2_geocoding_julien.csv'
     total_error = 0
-    with open(in_file, 'r',encoding='UTF-8') as addresses, \
-            open(out_file, 'w',encoding='UTF-8') as out:
+    with open(in_file, 'r', encoding='UTF-8') as addresses, \
+            open(out_file, 'w', encoding='UTF-8') as out:
         for i, line in enumerate(addresses):
             line = line[:-1].replace('"', '')
             if i == 0:
-                out.write(line+';locality;number;street;code_post;city;code_insee;country;quality;distance;error;lon;lat;time\n')
+                out.write(line+';locality;number;street;code_post;city;\
+code_insee;country;quality;distance;error;lon;lat;time\n')
                 continue
             values = line.split(';')
             try:
@@ -126,14 +128,18 @@ def batch2(db):
 def calculate_metrics():
     out_file = 'data/adresses_vAMABIS_v28092016_out_v2_geocoding_julien.csv'
     df = pd.read_csv(out_file, delimiter=';')
-    metrics = df.groupby('quality')['error'].agg(['count', 'sum', 'mean', 'std','min','median', 'max' ])
+    metrics = df.groupby('quality')['error'].agg(['count', 'sum', 'mean',
+                                                  'std', 'min', 'median',
+                                                  'max'])
     print(metrics)
     timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     metrics.to_csv('data/metrics/metrics %s.csv' % timestamp)
-    metrics = df.groupby(['quality', 'STACOORD'])['error'].agg(['count', 'sum', 'mean', 'std','min','median', 'max' ])
+    metrics = df.groupby(['quality', 'STACOORD'])['error'] \
+                .agg(['count', 'sum', 'mean', 'std', 'min', 'median', 'max'])
     metrics.to_csv('data/metrics/metrics_detailed %s.csv' % timestamp)
     print(df[df['quality'] == 1]['error'].describe())
-    print(df.groupby(['STACOORD'])['error'].agg(['count', 'sum', 'mean', 'std','min','median', 'max' ]))
+    print(df.groupby(['STACOORD'])['error'].agg(['count', 'sum', 'mean', 'std',
+                                                'min', 'median', 'max']))
 
 
 def save_big_error():

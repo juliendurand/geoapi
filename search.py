@@ -119,9 +119,6 @@ def get_repetition(query):
 
 
 def search_insee(db, code_post, city):
-    # print(db.cities_post_index.dtype)
-    #for i in range(0, 50):
-    #    print(db.cities_post_index[i])
     city_pos_list = find_all_from_index(code_post, db.cities_post_index,
                                         db.cities['code_post'], string=True)
     cities = [db.cities[pos] for pos in city_pos_list]
@@ -134,7 +131,7 @@ def search_insee(db, code_post, city):
                   in range(lo, hi+1)]
     names = [c['nom_commune'].decode('UTF-8') for c in cities]
     city, max_score = best_match(city, names)
-    return cities[city]['code_insee'].decode('UTF-8') if city is not None else None
+    return cities[city]['code_insee'].decode('UTF-8') if city else None
 
 
 def search_street(db, code_insee_list, code_post, query):
@@ -160,10 +157,10 @@ def search_locality(db, code_insee_list, query, min_score):
     min_score = max(0.7, min_score)
     locality_pos_list = []
     for code in code_insee_list:
-        locality_pos_list.append(find_all_from_index(code,
-                                                     db.localities_insee_index,
-                                                     db.localities['code_insee'],
-                                                     string=True))
+        locality_pos_list.append(
+            find_all_from_index(code, db.localities_insee_index,
+                                db.localities['code_insee'], string=True)
+            )
     locality_pos_list = chain(*locality_pos_list)
     localities = [db.localities[pos] for pos in locality_pos_list]
     names = [l['nom_ld'].decode('UTF-8') for l in localities]
@@ -254,11 +251,13 @@ def search_by_zip_and_city(db, code_post, city, query):
                                              db.cities_post_index,
                                              db.cities['code_post'],
                                              string=True)
-        code_insee_list = [db.cities[pos]['code_insee'].decode('UTF-8') for pos in code_insee_pos]
+        code_insee_list = [db.cities[pos]['code_insee'].decode('UTF-8') for
+                           pos in code_insee_pos]
         if len(code_insee_list) > 0:
             result = search_by_insee(db, code_insee_list, code_post, query)
         else:
-            result = address.Result.from_error('Could not find the city for this address.')
+            result = address.Result.from_error('Could not find the city for ' +
+                                               'this address.')
     result.set_time(time.time()-start)
     return result
 
@@ -274,6 +273,5 @@ if __name__ == '__main__':
 #    print(search_by_zip_and_city(db, '78500', 'sartrouville', '').to_json())
 #    print(search_by_zip_and_city(db, '93152', 'LE BLANC MESNIL CEDEX', '15 AV CHARLES DE GAULLE',).to_json())
 #    print(search_by_zip_and_city(db, '13080', 'LUYNES', '685 CH DE LA COMMANDERIE DE  ST JEAN DE MALTES',).to_json())
-    
 #    print(search_by_zip_and_city(db, '60800', 'TRUMILLY', 'LE PLESSIS CORNEFROY 3 RUE DE BEAURAIN',).to_json())
     print(search_by_zip_and_city(db, '75116', 'PARIS', '198 AV VICTOR HUGO',).to_json())
