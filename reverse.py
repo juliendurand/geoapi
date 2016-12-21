@@ -66,10 +66,15 @@ if __name__ == '__main__':
             }
             values = line[:-1].replace('"', '').split(';')
             # print(values[32], values[33])
+            lon = None
+            lat = None
             try:
-
                 lon = float(values[32])
                 lat = float(values[33])
+            except Exception as e:
+                # invalid line in input file
+                pass
+            if lon and lat:
                 address = reverse(db, lon, lat).to_address()
                 values += [
                     address['locality'],
@@ -84,9 +89,7 @@ if __name__ == '__main__':
                     address['lat'],
                     ]
                 d += address['distance']
-            except Exception as e:
-                print(e)
-            out.write(";".join(map(str, values))+'\n')
-            i += 1
+                out.write(";".join(map(str, values))+'\n')
+                i += 1
         print(i, ' lines')
         print(d/i, ' mean distance')
