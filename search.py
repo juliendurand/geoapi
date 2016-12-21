@@ -219,13 +219,14 @@ def search_number(db,  street_id, locality_id, number, max_score):
             n_idx += 1
 
         # exact number was not found => interpolate address position
-        lon, lat = reverse_geohash(n['geohash'])
         if lo:
             n = db.numbers[lo]
+            lon, lat = reverse_geohash(n['geohash'])
             return address.Result.from_interpolated(db, number, street_id,
                                                     lon, lat)
         else:
             n = db.numbers[hi]
+            lon, lat = reverse_geohash(n['geohash'])
             return address.Result.from_interpolated(db, number, street_id,
                                                     lon, lat)
 
@@ -266,10 +267,13 @@ if __name__ == '__main__':
     import main
     db = main.AddressDatabase()
 
-    print(search_by_zip_and_city(db, '33200', 'BORDEAUX', '303 BD DU PRESIDENT WILSON').to_json())
-    print(search_by_zip_and_city(db, '75013', 'PARIS', '7 PLACE DE RUNGIS').to_json())
-    print(search_by_zip_and_city(db, '44300', 'Nantes', '40 rue de la cognardière').to_json())
-    print(search_by_zip_and_city(db, '58400', 'narcy', 'Le boisson').to_json())
-    print(search_by_zip_and_city(db, '78500', 'sartrouville', '').to_json())
-    print(search_by_zip_and_city(db, '93152', 'LE BLANC MESNIL CEDEX', '15 AV CHARLES DE GAULLE',).to_json())
-    print(search_by_zip_and_city(db, '13080', 'LUYNES', '685 CH DE LA COMMANDERIE DE  ST JEAN DE MALTES',).to_json())
+#    print(search_by_zip_and_city(db, '33200', 'BORDEAUX', '303 BD DU PRESIDENT WILSON').to_json())
+#    print(search_by_zip_and_city(db, '75013', 'PARIS', '7 PLACE DE RUNGIS').to_json())
+#    print(search_by_zip_and_city(db, '44300', 'Nantes', '40 rue de la cognardière').to_json())
+#    print(search_by_zip_and_city(db, '58400', 'narcy', 'Le boisson').to_json())
+#    print(search_by_zip_and_city(db, '78500', 'sartrouville', '').to_json())
+#    print(search_by_zip_and_city(db, '93152', 'LE BLANC MESNIL CEDEX', '15 AV CHARLES DE GAULLE',).to_json())
+#    print(search_by_zip_and_city(db, '13080', 'LUYNES', '685 CH DE LA COMMANDERIE DE  ST JEAN DE MALTES',).to_json())
+    
+#    print(search_by_zip_and_city(db, '60800', 'TRUMILLY', 'LE PLESSIS CORNEFROY 3 RUE DE BEAURAIN',).to_json())
+    print(search_by_zip_and_city(db, '75116', 'PARIS', '198 AV VICTOR HUGO',).to_json())
