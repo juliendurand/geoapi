@@ -15,7 +15,7 @@ limitations under the License.
 """
 
 import mmap
-from math import radians, cos, sin, asin, sqrt
+from math import cos, sin, asin, sqrt
 
 DEGREE_TO_INT_SCALE = 10000000
 

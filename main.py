@@ -17,7 +17,6 @@ limitations under the License.
 import itertools
 import json
 import os
-import sys
 
 import numpy as np
 from unidecode import unidecode
