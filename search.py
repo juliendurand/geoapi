@@ -243,6 +243,7 @@ def search_number(db,  street_id, locality_id, number, max_score):
 def search_by_zip_and_city(db, code_post, city, query):
     start = time.time()
     result = None
+    code_post = code_post.zfill(5)
     code_insee = search_insee(db, code_post, city)
     if code_insee:
         result = search_by_insee(db, [code_insee], code_post, query)

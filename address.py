@@ -86,8 +86,8 @@ class Result():
         r.code_post = street['code_post'].decode('UTF-8')
         r.city = city['nom_commune'].decode('UTF-8')
         r.code_insee = code_insee.decode('UTF-8')
-        r.lon = int_to_degree(lon)
-        r.lat = int_to_degree(lat)
+        r.lon = lon
+        r.lat = lat
 
         return r
 
@@ -116,7 +116,7 @@ class Result():
         return r
 
     @classmethod
-    def from_code_post(cls, code_post):
+    def from_code_post(cls, db, code_post):
         r = cls(ResultQuality.ZIP)
 
         r.code_post = code_post

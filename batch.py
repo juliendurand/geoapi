@@ -39,8 +39,8 @@ code_insee;country;quality;distance;error;lon;lat;time\n')
                         d = haversine(lon1, lat1, lon2, lat2)
                     else:
                         d = 0
-                    if d == 100000:
-                        print(i)
+                    if d >= 100000:
+                        print(i, d)
                     error = d
                     values += [
                         address['locality'],
@@ -97,8 +97,8 @@ code_insee;country;quality;distance;error;lon;lat;time\n')
                         d = haversine(lon1, lat1, lon2, lat2)
                 else:
                     d = 0
-                if d == 100000:
-                    print(i)
+                if d >= 100000:
+                    print(i, d)
                 error = d
                 values += [
                     address['locality'],
@@ -152,5 +152,5 @@ if __name__ == '__main__':
     db = main.AddressDatabase()
     batch(db)
     batch2(db)
-    #calculate_metrics()
-    #save_big_error()
+    calculate_metrics()
+    save_big_error()
