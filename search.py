@@ -82,7 +82,7 @@ def find_all_from_index(x, index, values, string=False):
         idx += 1
 
 
-def best_match(query, items, min_score=0):
+def best_match(query, items, min_score=0.5):
     match = None
     max_score = 0
     if query:
@@ -278,3 +278,4 @@ if __name__ == '__main__':
 #    print(search_by_zip_and_city(db, '60800', 'TRUMILLY', 'LE PLESSIS CORNEFROY 3 RUE DE BEAURAIN',).to_json())
 #    print(search_by_zip_and_city(db, '75116', 'PARIS', '198 AV VICTOR HUGO',).to_json())
 #    print(search_by_zip_and_city(db, '75015', 'PARIS', '140 RUE SAINT CHARLES',).to_json())
+    print(search_by_zip_and_city(db, '44150', 'ST HERBLON', '16 RUE DU FORT',).to_json())
