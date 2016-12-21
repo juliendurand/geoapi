@@ -17,7 +17,6 @@ limitations under the License.
 import itertools
 import json
 import os
-import sys
 
 import numpy as np
 from unidecode import unidecode
@@ -291,14 +290,14 @@ def number_factory(line):
 
 def create_np_table(in_filename, dtype, factory, out_filename, sort=None):
     nb_lines = utils.count_file_lines(in_filename)
-    table = np.memmap(out_filename, dtype=dtype, mode="w+", shape=(nb_lines,))
-    with open(in_filename, "r+") as f:
+    with open(in_filename, 'r+') as f, open(out_filename, 'wb+') as out_file:
+        table = np.memmap(out_file, dtype=dtype, shape=(nb_lines,))
         for i, line in enumerate(f):
             table[i] = factory(line)
-    if sort:
-        table.sort(order=sort)
-        print('sorted %s on %s' % (out_filename, sort))
-    table.flush()
+        if sort:
+            table.sort(order=sort)
+            print('sorted %s on %s' % (out_filename, sort))
+        table.flush()
     print('written ', out_filename, ' : %.3f' % utils.b_to_mb(table.nbytes),
           'MB')
     os.remove(in_filename)
@@ -307,7 +306,8 @@ def create_np_table(in_filename, dtype, factory, out_filename, sort=None):
 
 def create_np_index(table, column, out_filename):
     index_column = np.argsort(table, order=column).astype('int32')
-    np.save(out_filename, index_column)
+    with open(out_filename, 'wb') as out_file:
+        np.save(out_file, index_column)
     print('written ', out_filename, ' : %.3f' %
           utils.b_to_mb(index_column.nbytes),
           'MB')
@@ -344,39 +344,25 @@ def index():
 class AddressDatabase:
 
     def __init__(self):
-        print('Database loading starts.')
-
         # data tables
-        print('Loading cities.')
         self.cities = np.memmap(city_db_path, dtype=city_dtype)
-        print('Loading streets.')
         self.streets = np.memmap(street_db_path, dtype=street_dtype)
-        print('Loading localities.')
         self.localities = np.memmap(locality_db_path, dtype=locality_dtype)
-        print('Loading numbers.')
         self.numbers = np.memmap(number_db_path, dtype=number_dtype)
 
         # indices
-        print('Loading cities_post_index.')
-        self.cities_post_index = np.memmap(cities_post_index_path+'.npy',
+        self.cities_post_index = np.memmap(cities_post_index_path,
                                            dtype='int32')
-        print('Loading street_insee_index.')
-        self.streets_insee_index = np.memmap(streets_insee_index_path+'.npy',
+        self.streets_insee_index = np.memmap(streets_insee_index_path,
                                              dtype='int32')
-        print('Loading localities_insee_index.')
-        self.localities_insee_index = np.memmap(localities_insee_index_path+'.npy',
+        self.localities_insee_index = np.memmap(localities_insee_index_path,
                                                 dtype='int32')
-        print('Loading number_locality_index.')
-        self.numbers_locality_index = np.memmap(numbers_locality_index_path+'.npy',
+        self.numbers_locality_index = np.memmap(numbers_locality_index_path,
                                                 dtype='int32')
-
-        print('Loading number_geohash_index.')
-        self.numbers_geohash_index = np.memmap(numbers_geohash_index_path+'.npy',
-                                                dtype='int32')
-
-        print('Database loaded.')
+        self.numbers_geohash_index = np.memmap(numbers_geohash_index_path,
+                                               dtype='int32')
 
 
 if __name__ == '__main__':
     print('indexing')
-    index()
+    create_db()
