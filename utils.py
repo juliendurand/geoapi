@@ -71,7 +71,10 @@ def haversine(lon1, lat1, lon2, lat2):
     on the earth (specified in decimal degrees)
     """
     # convert decimal degrees to radians
-    lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
+    lon1 *= 0.0174533
+    lat1 *= 0.0174533
+    lon2 *= 0.0174533
+    lat2 *= 0.0174533
     # haversine formula
     dlon = lon2 - lon1
     dlat = lat2 - lat1

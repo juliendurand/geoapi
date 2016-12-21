@@ -35,6 +35,8 @@ def reverse(db, lon, lat):
         if d < min_distance:
             min_distance = d
             match = hyp
+    hlon, hlat = reverse_geohash(db.numbers[match]['geohash'])
+    min_distance = haversine(hlon, hlat, lon, lat)
     return Result.from_plate(db, match, 0, distance=min_distance)
 
 
