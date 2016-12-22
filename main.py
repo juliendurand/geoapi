@@ -122,7 +122,7 @@ def index_departement(departement, city_file, street_file, locality_file,
     localities = {}
     numbers = set()
 
-    with open(file, 'r') as in_file:
+    with open(file, 'r', encoding='UTF-8') as in_file:
         next(in_file, None)  # skip header (first line)
         duplicates = 0
         nb_exceptions = 0
@@ -236,11 +236,11 @@ def process_csv_files():
     locality_id_generator = itertools.count()
     repetition_id_generator = itertools.count()
 
-    with open(city_csv_path, 'w') as city_file, \
-            open(street_csv_path, 'w') as street_file, \
-            open(locality_csv_path, 'w') as locality_file, \
-            open(number_csv_path, 'w') as number_file, \
-            open(repetition_ref_path, 'w') as repetition_file:
+    with open(city_csv_path, 'w', encoding='UTF-8') as city_file, \
+            open(street_csv_path, 'w', encoding='UTF-8') as street_file, \
+            open(locality_csv_path, 'w', encoding='UTF-8') as locality_file, \
+            open(number_csv_path, 'w', encoding='UTF-8') as number_file, \
+            open(repetition_ref_path, 'w', encoding='UTF-8') as repetition_file:
 
         for departement in departements:
             nb_exceptions += index_departement(departement, city_file,
