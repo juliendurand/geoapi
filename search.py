@@ -26,14 +26,16 @@ from trigram import Trigram
 from utils import reverse_geohash
 
 
-def find(x, values):
+def find(x, values, string=False):
     lo = 0
     hi = len(values)
     while lo < hi:
-        mid = (lo+hi)//2
+        mid = (lo + hi) //2
         midval = values[mid]
+        if string:
+            midval = midval.decode('UTF-8')
         if midval < x:
-            lo = mid+1
+            lo = mid + 1
         else:
             hi = mid
     return lo
@@ -54,7 +56,7 @@ def find_index(x, index, values, string=False):
     lo = 0
     hi = len(index)
     while lo < hi:
-        mid = (lo+hi)//2
+        mid = (lo + hi) // 2
         idx = index[mid]
         if (idx > 100000000):
             print("IDX ERROR", x, lo, hi, mid, idx, string)
@@ -62,7 +64,7 @@ def find_index(x, index, values, string=False):
         if string:
             midval = midval.decode('UTF-8')
         if midval < x:
-            lo = mid+1
+            lo = mid + 1
         else:
             hi = mid
     return lo
@@ -119,16 +121,17 @@ def get_repetition(query):
 
 
 def search_insee(db, code_post, city):
+    city = city.replace('CEDEX', '')
     city_pos_list = find_all_from_index(code_post, db.cities_post_index,
                                         db.cities['code_post'], string=True)
     cities = [db.cities[pos] for pos in city_pos_list]
     if len(cities) == 0:
-        lo = find_index(code_post[:2]+'000', db.cities_post_index,
+        lo = find_index(code_post[:2] + '000', db.cities_post_index,
                         db.cities['code_post'], string=True)
-        hi = find_index(code_post[:2]+'999', db.cities_post_index,
+        hi = find_index(code_post[:2] + '999', db.cities_post_index,
                         db.cities['code_post'], string=True)
         cities = [db.cities[db.cities_post_index[idx]] for idx
-                  in range(lo, hi+1)]
+                  in range(lo, hi + 1)]
     names = [c['nom_commune'].decode('UTF-8') for c in cities]
     city, max_score = best_match(city, names)
     return cities[city]['code_insee'].decode('UTF-8') if city is not None \
@@ -160,7 +163,7 @@ def search_locality(db, code_insee_list, query, min_score):
         locality_pos_list.append(
             find_all_from_index(code, db.localities_insee_index,
                                 db.localities['code_insee'], string=True)
-            )
+        )
     locality_pos_list = chain(*locality_pos_list)
     localities = [db.localities[pos] for pos in locality_pos_list]
     names = [l['nom_ld'].decode('UTF-8') for l in localities]
@@ -194,7 +197,7 @@ def search_by_insee(db, code_insee_list, code_post, query):
     return search_number(db, street_id, locality_id, number, max_score)
 
 
-def search_number(db,  street_id, locality_id, number, max_score):
+def search_number(db, street_id, locality_id, number, max_score):
     if locality_id:
         result_idx = find_index(locality_id, db.numbers_locality_index,
                                 db.numbers['locality_id'])
@@ -260,7 +263,7 @@ def search_by_zip_and_city(db, code_post, city, query):
         else:
             result = address.Result.from_error('Could not find the city for ' +
                                                'this address.')
-    result.set_time(time.time()-start)
+    result.set_time(time.time() - start)
     return result
 
 
@@ -278,4 +281,4 @@ if __name__ == '__main__':
 #    print(search_by_zip_and_city(db, '60800', 'TRUMILLY', 'LE PLESSIS CORNEFROY 3 RUE DE BEAURAIN',).to_json())
 #    print(search_by_zip_and_city(db, '75116', 'PARIS', '198 AV VICTOR HUGO',).to_json())
 #    print(search_by_zip_and_city(db, '75015', 'PARIS', '140 RUE SAINT CHARLES',).to_json())
-    print(search_by_zip_and_city(db, '44150', 'ST HERBLON', '16 RUE DU FORT',).to_json())
+#    print(search_by_zip_and_city(db, '44150', 'ST HERBLON', '16 RUE DU FORT',).to_json())
