@@ -17,8 +17,7 @@ limitations under the License.
 from enum import Enum
 import json
 
-from search import find
-from utils import int_to_degree, reverse_geohash
+from utils import int_to_degree, reverse_geohash, find
 
 
 class ResultQuality(Enum):
@@ -121,7 +120,7 @@ class Result():
         r = cls(ResultQuality.ZIP)
 
         # FIXME : return the centroid of the zip
-        city_arg = find(code_post, db.cities['code_post'])
+        city_arg = find(code_post, db.cities['code_post'], string=True)
         city = db.cities[city_arg]
 
         r.code_post = code_post

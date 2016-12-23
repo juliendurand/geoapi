@@ -28,7 +28,7 @@ def safe_cast(val, to_type, default=None):
 
 
 def degree_to_int(angle):
-    return int(angle*DEGREE_TO_INT_SCALE)
+    return int(angle * DEGREE_TO_INT_SCALE)
 
 
 def int_to_degree(value):
@@ -82,3 +82,61 @@ def haversine(lon1, lat1, lon2, lat2):
     c = 2 * asin(sqrt(a))
     m = 6367000 * c
     return m
+
+
+def find(x, values, string=False):
+    lo = 0
+    hi = len(values)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        midval = values[mid]
+        if string:
+            midval = midval.decode('UTF-8')
+        if midval < x:
+            lo = mid + 1
+        else:
+            hi = mid
+    return lo
+
+
+# TODO : remove because not useful anymore
+def find_all(x, values):
+    pos = find(x, values)
+    size = values.size
+    while pos < size:
+        if values[pos] != x:
+            break
+        yield pos
+        pos += 1
+
+
+def find_index(x, index, values, string=False):
+    lo = 0
+    hi = len(index)
+    while lo < hi:
+        mid = (lo + hi) // 2
+        idx = index[mid]
+        if (idx > 100000000):
+            print("IDX ERROR", x, lo, hi, mid, idx, string)
+        midval = values[idx]
+        if string:
+            midval = midval.decode('UTF-8')
+        if midval < x:
+            lo = mid + 1
+        else:
+            hi = mid
+    return lo
+
+
+def find_all_from_index(x, index, values, string=False):
+    idx = find_index(x, index, values, string)
+    n = len(index)
+    while idx < n:
+        pos = index[idx]
+        value = values[pos]
+        if string:
+            value = value.decode('UTF-8')
+        if value != x:
+            break
+        yield pos
+        idx += 1
