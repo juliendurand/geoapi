@@ -19,7 +19,7 @@ def batch(db):
         for i, line in enumerate(addresses):
             line = line[:-1].replace('"', '')
             if i == 0:
-                out.write(line+';locality;number;street;code_post;city;\
+                out.write(line + ';locality;number;street;code_post;city;\
 code_insee;country;quality;distance;error;lon;lat;time\n')
                 continue
             values = line.split(';')
@@ -56,15 +56,15 @@ code_insee;country;quality;distance;error;lon;lat;time\n')
                         address['lon'],
                         address['lat'],
                         address['time'],
-                        ]
+                    ]
                     total_error += error
             except Exception as e:
                 print(e)
                 traceback.print_exc()
             out.write(";".join(map(str, values)) + '\n')
             if i % 1000 == 0:
-                print(i, 'th ERROR: ', round(total_error/(i-1), 2))
-        print('FINAL ERROR: ', round(total_error/(i-1), 2))
+                print(i, 'th ERROR: ', round(total_error / (i - 1), 2))
+        print('FINAL ERROR: ', round(total_error / (i - 1), 2))
 
 
 def batch2(db):
@@ -77,7 +77,7 @@ def batch2(db):
         for i, line in enumerate(addresses):
             line = line[:-1].replace('"', '')
             if i == 0:
-                out.write(line+';locality;number;street;code_post;city;\
+                out.write(line + ';locality;number;street;code_post;city;\
 code_insee;country;quality;distance;error;lon;lat;time\n')
                 continue
             values = line.split(';')
@@ -114,15 +114,15 @@ code_insee;country;quality;distance;error;lon;lat;time\n')
                     address['lon'],
                     address['lat'],
                     address['time'],
-                    ]
+                ]
                 total_error += error
             except Exception as e:
                 print(e)
                 traceback.print_exc()
             out.write(";".join(map(str, values)) + '\n')
             if i % 1000 == 0:
-                print(i, 'th ERROR: ', round(total_error/(i-1), 2))
-        print('FINAL ERROR: ', round(total_error/(i-1), 2))
+                print(i, 'th ERROR: ', round(total_error / (i - 1), 2))
+        print('FINAL ERROR: ', round(total_error / (i - 1), 2))
 
 
 def calculate_metrics():
@@ -139,7 +139,7 @@ def calculate_metrics():
     metrics.to_csv('data/metrics/metrics_detailed %s.csv' % timestamp)
     print(df[df['quality'] == 1]['error'].describe())
     print(df.groupby(['STACOORD'])['error'].agg(['count', 'sum', 'mean', 'std',
-                                                'min', 'median', 'max']))
+                                                 'min', 'median', 'max']))
 
 
 def save_big_error():

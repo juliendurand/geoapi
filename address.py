@@ -17,6 +17,7 @@ limitations under the License.
 from enum import Enum
 import json
 
+from search import find
 from utils import int_to_degree, reverse_geohash
 
 
@@ -78,7 +79,7 @@ class Result():
 
         street = db.streets[street_id]
         code_insee = street['code_insee']
-        city_arg = db.cities['code_insee'].searchsorted(code_insee)
+        city_arg = find(code_insee, db.cities['code_insee'])
         city = db.cities[city_arg]
 
         r.number = int(number)
@@ -104,7 +105,7 @@ class Result():
     def from_city(cls, db, code_insee, code_post=None):
         r = cls(ResultQuality.CITY)
 
-        city_arg = db.cities['code_insee'].searchsorted(code_insee)
+        city_arg = find(code_insee, db.cities['code_insee'], string=True)
         city = db.cities[city_arg]
 
         r.city = city['nom_commune'].decode('UTF-8')
@@ -119,8 +120,13 @@ class Result():
     def from_code_post(cls, db, code_post):
         r = cls(ResultQuality.ZIP)
 
+        # FIXME : return the centroid of the zip
+        city_arg = find(code_post, db.cities['code_post'])
+        city = db.cities[city_arg]
+
         r.code_post = code_post
-        # TODO return lon and lat
+        r.lon = int_to_degree(city['lon'])
+        r.lat = int_to_degree(city['lat'])
 
         return r
 
@@ -133,7 +139,7 @@ class Result():
         street_id = n['street_id']
         street = db.streets[street_id]
         code_insee = street['code_insee']
-        city_arg = db.cities['code_insee'].searchsorted(code_insee)
+        city_arg = find(code_insee, db.cities['code_insee'])
         city = db.cities[city_arg]
         locality = db.localities[locality_id]
         locality_name = locality['nom_ld'].decode('UTF-8')
