@@ -7,9 +7,9 @@ import main
 import search
 from utils import haversine
 
-
 def batch(db):
     # in_file = 'data/adresses_vAMABIS_v28092016_out_v2.csv'
+
     in_file = 'data/ADRESSES_PART_GEO_AMABIS_v01072016_out.csv'
     out_file = 'data/ADRESSES_PART_GEO_AMABIS_v01072016_geocoding_julien.csv'
     total_error = 0
@@ -26,38 +26,39 @@ code_insee;country;quality;distance;error;lon;lat;time\n')
             try:
                 code_post = values[5].zfill(5)
                 city = values[6]
-                query = values[3] or values[2] or values[1]
+#                query = values[3] or values[2] or values[1]
+                query = values[4]                
                 address = search.search_by_zip_and_city(db, code_post, city,
                                                         query).to_address()
                 d = 100000
-                if values[32] and values[33]:
-                    if address['lon'] and address['lat']:
+                if address['lon'] and address['lat']:
+                    if values[32] and values[33]:                    
                         lon1 = float(values[32])
                         lat1 = float(values[33])
                         lon2 = float(address['lon'])
                         lat2 = float(address['lat'])
                         d = haversine(lon1, lat1, lon2, lat2)
                     else:
-                        d = 0
+                        d = 0 #TO CHECK d=0 when unavailable values 32,33
                     if d >= 100000:
                         print(i, d)
                     error = d
-                    values += [
-                        address['locality'],
-                        address['number'],
-                        address['street'],
-                        address['code_post'],
-                        address['city'],
-                        address['code_insee'],
-                        address['country'],
-                        address['quality'].value,
-                        str(round(d, 2)),
-                        str(round(error, 6)),
-                        address['lon'],
-                        address['lat'],
-                        address['time'],
-                    ]
                     total_error += error
+                values += [
+                    address['locality'],
+                    address['number'],
+                    address['street'],
+                    address['code_post'],
+                    address['city'],
+                    address['code_insee'],
+                    address['country'],
+                    address['quality'].value,
+                    str(round(d, 2)),
+                    str(round(error, 6)),
+                    address['lon'],
+                    address['lat'],
+                    address['time'],
+                ]
             except Exception as e:
                 print(e)
                 traceback.print_exc()
@@ -88,18 +89,19 @@ code_insee;country;quality;distance;error;lon;lat;time\n')
                 address = search.search_by_zip_and_city(db, code_post, city,
                                                         query).to_address()
                 d = 100000
-                if values[31] and values[32]:
-                    if address['lon'] and address['lat']:
+                if address['lon'] and address['lat']:
+                    if values[31] and values[32]:                    
                         lon1 = float(values[31])
                         lat1 = float(values[32])
                         lon2 = float(address['lon'])
                         lat2 = float(address['lat'])
                         d = haversine(lon1, lat1, lon2, lat2)
-                else:
-                    d = 0
-                if d >= 100000:
-                    print(i, d)
-                error = d
+                    else:
+                        d = 0 #TO CHECK d=0 when unavailable values 32,33
+                    if d >= 100000:
+                        print(i, d)
+                    error = d
+                    total_error += error
                 values += [
                     address['locality'],
                     address['number'],
@@ -115,7 +117,6 @@ code_insee;country;quality;distance;error;lon;lat;time\n')
                     address['lat'],
                     address['time'],
                 ]
-                total_error += error
             except Exception as e:
                 print(e)
                 traceback.print_exc()
@@ -123,7 +124,6 @@ code_insee;country;quality;distance;error;lon;lat;time\n')
             if i % 1000 == 0:
                 print(i, 'th ERROR: ', round(total_error / (i - 1), 2))
         print('FINAL ERROR: ', round(total_error / (i - 1), 2))
-
 
 def calculate_metrics():
     out_file = 'data/adresses_vAMABIS_v28092016_out_v2_geocoding_julien.csv'
