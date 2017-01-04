@@ -91,9 +91,8 @@ def batch(db, in_file, out_file):
         print('FINAL ERROR: ', round(total_error / (i + 1), 2))
 
 
-def calculate_metrics():
-    out_file = 'data/adresses_vAMABIS_v28092016_out_v2_geocoding_julien.csv'
-    df = pd.read_csv(out_file, delimiter=';')
+def calculate_metrics(filename):
+    df = pd.read_csv(filename, delimiter=';')
     metrics = df.groupby('quality')['error'].agg(['count', 'sum', 'mean',
                                                   'std', 'min', 'median',
                                                   'max'])
@@ -108,9 +107,8 @@ def calculate_metrics():
                                                  'min', 'median', 'max']))
 
 
-def save_big_error():
-    out_file = 'data/adresses_vAMABIS_v28092016_out_v2_geocoding_julien.csv'
-    df = pd.read_csv(out_file, delimiter=';')
+def save_big_error(filename):
+    df = pd.read_csv(filename, delimiter=';')
     df[df['error'] > 1000].to_csv('data/big_error.csv')
 
 
@@ -120,5 +118,5 @@ if __name__ == '__main__':
           'data/ADRESSES_PART_GEO_AMABIS_v01072016_geocoding_julien.csv')
     batch(db, 'data/adresses_vAMABIS_v28092016_out_v2.csv',
           'data/adresses_vAMABIS_v28092016_out_v2_geocoding_julien.csv')
-    calculate_metrics()
-    save_big_error()
+    calculate_metrics('data/adresses_vAMABIS_v28092016_out_v2_geocoding_julien.csv')
+    save_big_error('data/adresses_vAMABIS_v28092016_out_v2_geocoding_julien.csv')
