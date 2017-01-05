@@ -50,38 +50,40 @@ def batch(db, in_file, out_file):
             try:
                 code_post = values[5].zfill(5)
                 city = values[6]
-                query = values[3] or values[2] or values[1]
+#                query = values[3] or values[2] or values[1]
+                query = values[4]                
                 address = search.search_by_zip_and_city(db, code_post, city,
                                                         query).to_address()
                 d = 100000
-                if values[lon_index] and values[lat_index]:
-                    if address['lon'] and address['lat']:
+
+                if address['lon'] and address['lat']:
+                    if values[lon_index] and values[lat_index]:
                         lon1 = float(values[lon_index])
                         lat1 = float(values[lat_index])
                         lon2 = float(address['lon'])
                         lat2 = float(address['lat'])
                         d = haversine(lon1, lat1, lon2, lat2)
                     else:
-                        d = 0
+                        d = 0 #TO CHECK d=0 when unavailable values 32,33
                     if d >= 100000:
                         print(i, d)
                     error = d
-                    values += [
-                        address['locality'],
-                        address['number'],
-                        address['street'],
-                        address['code_post'],
-                        address['city'],
-                        address['code_insee'],
-                        address['country'],
-                        address['quality'].value,
-                        str(round(d, 2)),
-                        str(round(error, 6)),
-                        address['lon'],
-                        address['lat'],
-                        address['time'],
-                    ]
                     total_error += error
+                values += [
+                    address['locality'],
+                    address['number'],
+                    address['street'],
+                    address['code_post'],
+                    address['city'],
+                    address['code_insee'],
+                    address['country'],
+                    address['quality'].value,
+                    str(round(d, 2)),
+                    str(round(error, 6)),
+                    address['lon'],
+                    address['lat'],
+                    address['time'],
+                ]
             except Exception as e:
                 print(e)
                 traceback.print_exc()
