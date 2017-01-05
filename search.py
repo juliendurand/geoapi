@@ -116,29 +116,6 @@ def search_locality(db, code_insee_list, query, min_score):
     return (match_id, max_score,)
 
 
-def search_by_insee(db, code_insee_list, code_post, query):
-    query = unidecode(query)
-    query = query.upper()
-    query = clean_query(query)
-
-    number = get_number(query)
-    query = query.replace(str(number), '').strip()
-
-    street_id, score_street = search_street(db, code_insee_list, code_post,
-                                            query)
-    locality_id, score_locality = search_locality(db, code_insee_list, query,
-                                                  score_street)
-    max_score = max(score_street, score_locality)
-
-    if not street_id and not locality_id:
-        if len(code_insee_list) == 1:
-            return address.Result.from_city(db, code_insee_list[0])
-        else:
-            return address.Result.from_code_post(db, code_post)
-
-    return search_number(db, street_id, locality_id, number, max_score)
-
-
 def search_number(db, street_id, locality_id, number, max_score):
     if locality_id:
         result_idx = find_index(locality_id, db.numbers_locality_index,
@@ -184,6 +161,30 @@ def search_number(db, street_id, locality_id, number, max_score):
             n_idx_hi += 1
         n_idx = (n_idx_lo + n_idx_hi) // 2
         return address.Result.from_street(db, n_idx)
+
+
+def search_by_insee(db, code_insee_list, code_post, query):
+    query = unidecode(query)
+    query = query.upper()
+    query = clean_query(query)
+
+    number = get_number(query)
+    query = query.replace(str(number), '')
+    query = ' '.join(query.split())  # remove multiple spaces
+
+    street_id, score_street = search_street(db, code_insee_list, code_post,
+                                            query)
+    locality_id, score_locality = search_locality(db, code_insee_list, query,
+                                                  score_street)
+    max_score = max(score_street, score_locality)
+
+    if not street_id and not locality_id:
+        if len(code_insee_list) == 1:
+            return address.Result.from_city(db, code_insee_list[0])
+        else:
+            return address.Result.from_code_post(db, code_post)
+
+    return search_number(db, street_id, locality_id, number, max_score)
 
 
 def search_by_zip_and_city(db, code_post, city, query):

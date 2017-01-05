@@ -51,7 +51,7 @@ def batch(db, in_file, out_file):
                 code_post = values[5].zfill(5)
                 city = values[6]
 #                query = values[3] or values[2] or values[1]
-                query = values[4]                
+                query = values[4]
                 address = search.search_by_zip_and_city(db, code_post, city,
                                                         query).to_address()
                 d = 100000
@@ -64,7 +64,7 @@ def batch(db, in_file, out_file):
                         lat2 = float(address['lat'])
                         d = haversine(lon1, lat1, lon2, lat2)
                     else:
-                        d = 0 #TO CHECK d=0 when unavailable values 32,33
+                        d = 0  # TO CHECK d=0 when unavailable values 32,33
                     if d >= 100000:
                         print(i, d)
                     error = d
@@ -88,8 +88,8 @@ def batch(db, in_file, out_file):
                 print(e)
                 traceback.print_exc()
             out.write(";".join(map(str, values)) + '\n')
-            if i % 1000 == 0:
-                print(i, 'th ERROR: ', round(total_error / (i + 1), 2))
+            if (i + 1) % 1000 == 0:
+                print(i + 1, 'th ERROR: ', round(total_error / (i + 1), 2))
         print('FINAL ERROR: ', round(total_error / (i + 1), 2))
 
 
