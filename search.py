@@ -48,13 +48,13 @@ def clean_query(query):
 
 
 def get_number(query):
-    for token in re.findall(r'\d+', query):
+    number = 0
+    for token in re.findall(r'(^|\W)(\d+)', query):
         try:
-            number = int(token)
-            return number
+            number = int(token[1])
         except:
             pass
-    return 0
+    return number
 
 
 def get_repetition(query):
@@ -225,3 +225,4 @@ if __name__ == '__main__':
 #    print(search_by_zip_and_city(db, '75116', 'PARIS', '198 AV VICTOR HUGO',).to_json())
 #    print(search_by_zip_and_city(db, '75015', 'PARIS', '140 RUE SAINT CHARLES',).to_json())
 #    print(search_by_zip_and_city(db, '44150', 'ST HERBLON', '16 RUE DU FORT',).to_json())
+    print(search_by_zip_and_city(db, '59285', 'ARNEKE', '2 ROUTE DE WORMHOUT').to_json())
