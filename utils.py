@@ -14,8 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+from math import pi, cos, sin, tan, asin, sqrt, log, exp
+
 import mmap
-from math import cos, sin, asin, sqrt
+import pyproj
 
 DEGREE_TO_INT_SCALE = 10000000
 
@@ -140,3 +142,42 @@ def find_all_from_index(x, index, values, string=False):
             break
         yield pos
         idx += 1
+
+
+wgs84 = pyproj.Proj(init='EPSG:4326')
+lambert93 = pyproj.Proj(init='EPSG:2154')
+
+
+def conv_lambert93_to_wsg84(lon, lat):
+    return pyproj.transform(lambert93, wgs84, lon, lat)
+
+
+def conv_wsg84_to_lambert93(lon, lat):
+    return pyproj.transform(wgs84, lambert93, lon, lat)
+
+
+# TODO remove unused functions below
+
+def isometric_latitude(lat, e):
+    esl = e * sin(lat)
+    return log(tan(pi / 4 + lat / 2) * pow((1 - esl) / (1 + esl), e / 2))
+
+
+def conv_wsg84_to_lambert93_mine(lon_deg, lat_deg,
+        n = 0.755525978809006,  # projection exponent
+        c = 11099578.2774377,  # projection constant (m)
+        e = 0.0818191910428158,  # first eccentricity of ellipsoid
+        lon_orig = 3 * pi / 180,  # longitude of origin (rad)
+        xpole = 700000.0,  # x coordinate of pole (m)
+        ypole = 6600000.0,  # y coordinate of pole (m)
+        ):
+
+    lon = lon_deg * pi / 180
+    lat = lat_deg * pi / 180
+    lat_iso = isometric_latitude(lat, e)
+    c_e_lat_iso = c * exp(-n * lat_iso)
+    n_lon_delta = n * (lon - lon_orig)
+    x = xpole + c_e_lat_iso * sin(n_lon_delta)
+    y = ypole - c_e_lat_iso * cos(n_lon_delta)
+
+    return (int(x), int(y), )

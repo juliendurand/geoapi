@@ -50,7 +50,7 @@ if __name__ == '__main__':
         for line in addresses:
             line = line[:-1]
             if i == 0:
-                out.write(line+';locality;number;street;code_post;city;\
+                out.write(line + ';locality;number;street;code_post;city;\
 code_insee;country;distance;lon;lat;\n')
                 i = 1
                 continue
