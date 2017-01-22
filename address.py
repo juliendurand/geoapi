@@ -117,7 +117,7 @@ class Result():
         lat = int_to_degree(city['lat'])
         r.lon = lon
         r.lat = lat
-        r.code_iris = iris.get_iris_from_lon_lat(code_insee, lon, lat)
+        r.code_iris = iris.get_iris_from_lon_lat(code_insee)
 
         return r
 
