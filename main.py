@@ -22,7 +22,6 @@ import numpy as np
 from unidecode import unidecode
 
 import utils
-import iris
 
 SEPARATOR = ','
 
@@ -109,7 +108,6 @@ number_dtype = np.dtype([
     ('number', 'int16'),
     ('rep', 'int8'),
     ('geohash', 'uint64'),
-    ('code_iris', 'a9'),
 ])
 
 #
@@ -218,9 +216,8 @@ def index_departement(departement, city_file, street_file, locality_file,
                                   numero + ':' + rep)
                 if number_key not in numbers:
                     numbers.add(number_key)
-                    code_iris = iris.get_iris(code_insee, x, y)
                     number_line = ','.join((street_id, locality_id, numero,
-                                            rep, lon, lat, code_iris))
+                                            rep, lon, lat))
                     number_file.write(number_line + '\n')
                 else:
                     duplicates += 1
@@ -294,7 +291,7 @@ def locality_factory(line):
 
 
 def number_factory(line):
-    street_id, locality_id, numero, rep, lon, lat, code_iris = \
+    street_id, locality_id, numero, rep, lon, lat = \
         line[:-1].split(SEPARATOR)
     street_id = int(street_id)
     locality_id = int(locality_id)
@@ -302,7 +299,7 @@ def number_factory(line):
     if numero > 2**16 - 1:
         raise Exception('Error : numero overflows 16bits')
     return (street_id, locality_id, numero, rep,
-            utils.geohash(float(lon), float(lat)), code_iris)
+            utils.geohash(float(lon), float(lat)))
 
 
 def create_np_table(in_filename, dtype, factory, out_filename, sort=None):

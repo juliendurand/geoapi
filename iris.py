@@ -29,8 +29,8 @@ def get_iris(insee, x, y):
     """
     x, y must be in Lambert93
     """
-    iris_list = iris_index[str(insee)]  # iris[iris['INSEE_COM'] == str(insee)]
-    if len(iris_list) == 0:
+    iris_list = iris_index.get(str(insee))
+    if iris_list is None or len(iris_list) == 0:
         raise Exception('Could not find IRIS for this INSEE code : ', insee)
     elif len(iris_list) == 1:
         return list(iris_list)[0]
@@ -53,6 +53,10 @@ def get_iris(insee, x, y):
     return match
 
 
-def get_iris_from_lon_lat(insee, lon, lat):
-    x, y = conv_wsg84_to_lambert93(lon, lat)
-    return get_iris(insee, x, y)
+def get_iris_from_insee(insee):
+    iris_list = iris_index[str(insee)]
+    if len(iris_list) == 0:
+        raise Exception('Could not find IRIS for this INSEE code : ', insee)
+    elif len(iris_list) == 1:
+        return list(iris_list)[0]
+    return None

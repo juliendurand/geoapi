@@ -18,7 +18,7 @@ from enum import Enum
 import json
 
 import iris
-from utils import int_to_degree, reverse_geohash, find
+from utils import int_to_degree, reverse_geohash, find, conv_wsg84_to_lambert93
 
 
 class ResultQuality(Enum):
@@ -75,7 +75,7 @@ class Result():
         return r
 
     @classmethod
-    def from_interpolated(cls, db, number, street_id, code_iris, lon, lat):
+    def from_interpolated(cls, db, number, street_id, lon, lat):
         r = cls(ResultQuality.NUMBER)
 
         street = db.streets[street_id]
@@ -88,9 +88,10 @@ class Result():
         r.code_post = street['code_post'].decode('UTF-8')
         r.city = city['nom_commune'].decode('UTF-8')
         r.code_insee = code_insee.decode('UTF-8')
-        r.code_iris = code_iris
         r.lon = lon
         r.lat = lat
+        x, y = conv_wsg84_to_lambert93(lon, lat)
+        r.code_iris = iris.get_iris(r.code_insee, x, y)
 
         return r
 
@@ -113,11 +114,9 @@ class Result():
         r.city = city['nom_commune'].decode('UTF-8')
         r.code_insee = code_insee
         r.code_post = code_post or city['code_post'].decode('UTF-8')
-        lon = int_to_degree(city['lon'])
-        lat = int_to_degree(city['lat'])
-        r.lon = lon
-        r.lat = lat
-        r.code_iris = iris.get_iris_from_lon_lat(code_insee)
+        r.code_iris = iris.get_iris_from_insee(code_insee) or ''
+        r.lon = int_to_degree(city['lon'])
+        r.lat = int_to_degree(city['lat'])
 
         return r
 
@@ -157,10 +156,11 @@ class Result():
             self.code_post = locality['code_post'].decode('UTF-8')
         self.city = city['nom_commune'].decode('UTF-8')
         self.code_insee = code_insee.decode('UTF-8')
-        self.code_iris = n['code_iris'].decode('UTF-8')
         lon, lat = reverse_geohash(n['geohash'])
         self.lon = lon
         self.lat = lat
+        x, y = conv_wsg84_to_lambert93(lon, lat)
+        self.code_iris = iris.get_iris(self.code_insee, x, y)
 
     def to_plain_address(self):
         address = []
