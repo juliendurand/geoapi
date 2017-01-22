@@ -1,6 +1,8 @@
 import geopandas as gpd
 from shapely.geometry import Point
 
+from utils import conv_wsg84_to_lambert93
+
 print('Loading IRIS Shapefile')
 # iris = gpd.read_file('./data/CONTOURS-IRIS_2-1__SHP_LAMB93_FXX_2016-11-10/CONTOURS-IRIS/1_DONNEES_LIVRAISON_2015/CONTOURS-IRIS_2-1_SHP_LAMB93_FE-2015/CONTOURS-IRIS.shp')
 iris = gpd.read_file('./data/Mix_Contours_IRIS_Communes_OSM/Mix_Contours_IRIS_Communes_OSM.shp')
@@ -20,7 +22,7 @@ for idx, row in iris.iterrows():
         iris_index[insee] = c
     c[code_iris] = geometry
 
-print('finished indexing IRIS')
+print('Finished indexing IRIS')
 
 
 def get_iris(insee, x, y):
@@ -49,3 +51,8 @@ def get_iris(insee, x, y):
             match = code_iris
             min_distance = distance
     return match
+
+
+def get_iris_from_lon_lat(insee, lon, lat):
+    x, y = conv_wsg84_to_lambert93(lon, lat)
+    return get_iris(insee, x, y)

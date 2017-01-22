@@ -142,5 +142,5 @@ def conv_lambert93_to_wsg84(lon, lat):
 
 
 def conv_wsg84_to_lambert93(lon, lat):
-    x, y = pyproj.transform(wgs84, lambert93, lon, lat)
+    x, y = pyproj.transform(wgs84, lambert93, float(lon), float(lat))
     return (round(x, 3), round(y, 3), )

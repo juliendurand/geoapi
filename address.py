@@ -17,6 +17,7 @@ limitations under the License.
 from enum import Enum
 import json
 
+import iris
 from utils import int_to_degree, reverse_geohash, find
 
 
@@ -112,8 +113,11 @@ class Result():
         r.city = city['nom_commune'].decode('UTF-8')
         r.code_insee = code_insee
         r.code_post = code_post or city['code_post'].decode('UTF-8')
-        r.lon = int_to_degree(city['lon'])
-        r.lat = int_to_degree(city['lat'])
+        lon = int_to_degree(city['lon'])
+        lat = int_to_degree(city['lat'])
+        r.lon = lon
+        r.lat = lat
+        r.code_iris = iris.get_iris_from_lon_lat(code_insee, lon, lat)
 
         return r
 
