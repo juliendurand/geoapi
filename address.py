@@ -47,6 +47,7 @@ class Result():
         self.city = ''
         self.code_post = ''
         self.code_insee = ''
+        self.code_iris = ''
         self.country = 'France'
         self.lon = ''
         self.lat = ''
@@ -73,7 +74,7 @@ class Result():
         return r
 
     @classmethod
-    def from_interpolated(cls, db, number, street_id, lon, lat):
+    def from_interpolated(cls, db, number, street_id, code_iris, lon, lat):
         r = cls(ResultQuality.NUMBER)
 
         street = db.streets[street_id]
@@ -86,6 +87,7 @@ class Result():
         r.code_post = street['code_post'].decode('UTF-8')
         r.city = city['nom_commune'].decode('UTF-8')
         r.code_insee = code_insee.decode('UTF-8')
+        r.code_iris = code_iris
         r.lon = lon
         r.lat = lat
 
@@ -151,6 +153,7 @@ class Result():
             self.code_post = locality['code_post'].decode('UTF-8')
         self.city = city['nom_commune'].decode('UTF-8')
         self.code_insee = code_insee.decode('UTF-8')
+        self.code_iris = n['code_iris'].decode('UTF-8')
         lon, lat = reverse_geohash(n['geohash'])
         self.lon = lon
         self.lat = lat

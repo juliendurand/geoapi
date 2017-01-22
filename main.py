@@ -80,22 +80,28 @@ Address = (
     'nom_commune',
 )
 
-city_dtype = np.dtype([('code_insee', 'a5'),
-                      ('code_post', 'a5'),
-                      ('nom_commune', 'a45'),
-                      ('lon', 'int32'),
-                      ('lat', 'int32')])
+city_dtype = np.dtype([
+    ('code_insee', 'a5'),
+    ('code_post', 'a5'),
+    ('nom_commune', 'a45'),
+    ('lon', 'int32'),
+    ('lat', 'int32'),
+])
 
-street_dtype = np.dtype([('street_id', 'int32'),
-                        ('code_insee', 'a5'),
-                        ('code_post', 'a5'),
-                        ('nom_voie', 'a32')])
+street_dtype = np.dtype([
+    ('street_id', 'int32'),
+    ('code_insee', 'a5'),
+    ('code_post', 'a5'),
+    ('nom_voie', 'a32'),
+])
 
 # 'lieu-dit' in french
-locality_dtype = np.dtype([('locality_id', 'int32'),
-                          ('code_insee', 'a5'),
-                          ('code_post', 'a5'),
-                          ('nom_ld', 'a80')])
+locality_dtype = np.dtype([
+    ('locality_id', 'int32'),
+    ('code_insee', 'a5'),
+    ('code_post', 'a5'),
+    ('nom_ld', 'a80'),
+])
 
 number_dtype = np.dtype([
     ('street_id', 'int32'),

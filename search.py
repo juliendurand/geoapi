@@ -141,14 +141,16 @@ def search_number(db, street_id, locality_id, number, max_score):
         # exact number was not found => interpolate address position
         if lo:
             n = db.numbers[lo]
+            code_iris = n['code_iris'].decode('UTF-8')
             lon, lat = reverse_geohash(n['geohash'])
             return address.Result.from_interpolated(db, number, street_id,
-                                                    lon, lat)
+                                                    code_iris, lon, lat)
         else:
             n = db.numbers[hi]
+            code_iris = n['code_iris'].decode('UTF-8')
             lon, lat = reverse_geohash(n['geohash'])
             return address.Result.from_interpolated(db, number, street_id,
-                                                    lon, lat)
+                                                    code_iris, lon, lat)
 
     else:
         # middle of the street
