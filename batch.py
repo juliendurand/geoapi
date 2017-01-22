@@ -5,7 +5,7 @@ import pandas as pd
 
 import main
 import search
-from utils import haversine, conv_wsg84_to_lambert93
+from utils import haversine
 
 
 def detect_separator(line):
@@ -28,8 +28,6 @@ def batch(db, in_file, out_file):
         headers = header.split(separator)
         lon_index = headers.index('LON')
         lat_index = headers.index('LAT')
-        x_index = headers.index('X')
-        y_index = headers.index('Y')
         new_headers = [
             'locality',
             'number',
@@ -65,10 +63,6 @@ def batch(db, in_file, out_file):
                         lon2 = float(address['lon'])
                         lat2 = float(address['lat'])
                         d = haversine(lon1, lat1, lon2, lat2)
-                        x1 = int(values[x_index])
-                        y1 = int(values[y_index])
-                        x2, y2 = conv_wsg84_to_lambert93(lon2, lat2)
-                        print(x1-x2, y1-y2, x1, y1, x2, y2)
                     else:
                         d = 0  # TO CHECK d=0 when unavailable values 32,33
                     if d >= 100000:

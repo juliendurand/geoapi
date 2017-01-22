@@ -22,6 +22,7 @@ import numpy as np
 from unidecode import unidecode
 
 import utils
+import iris
 
 SEPARATOR = ','
 
@@ -58,7 +59,7 @@ departements = (
     '80', '81', '82', '83', '84', '85', '86', '87', '88', '89',
     '90', '91', '92', '93', '94', '95',
     '971', '972', '973', '974', '975', '976',
-    )
+)
 
 Address = (
     'id',
@@ -96,11 +97,14 @@ locality_dtype = np.dtype([('locality_id', 'int32'),
                           ('code_post', 'a5'),
                           ('nom_ld', 'a80')])
 
-number_dtype = np.dtype([('street_id', 'int32'),
-                        ('locality_id', 'int32'),
-                        ('number', 'int16'),
-                        ('rep', 'int8'),
-                        ('geohash', 'uint64')])
+number_dtype = np.dtype([
+    ('street_id', 'int32'),
+    ('locality_id', 'int32'),
+    ('number', 'int16'),
+    ('rep', 'int8'),
+    ('geohash', 'uint64'),
+    ('code_iris', 'a9'),
+])
 
 #
 # Index
@@ -155,9 +159,9 @@ def index_departement(departement, city_file, street_file, locality_file,
                 if len(nom_commune) > 45:
                     raise Exception('Invalid nom_commune : "%s"' % nom_commune)
 
-                x = values[11]
+                x = float(values[11])
 
-                y = values[12]
+                y = float(values[12])
 
                 lon = values[13]
                 if not -180 <= float(lon) <= 180:
@@ -208,8 +212,9 @@ def index_departement(departement, city_file, street_file, locality_file,
                                   numero + ':' + rep)
                 if number_key not in numbers:
                     numbers.add(number_key)
+                    code_iris = iris.get_iris(code_insee, x, y)
                     number_line = ','.join((street_id, locality_id, numero,
-                                            rep, lon, lat,))
+                                            rep, lon, lat, code_iris))
                     number_file.write(number_line + '\n')
                 else:
                     duplicates += 1
@@ -283,14 +288,15 @@ def locality_factory(line):
 
 
 def number_factory(line):
-    street_id, locality_id, numero, rep, lon, lat = line[:-1].split(SEPARATOR)
+    street_id, locality_id, numero, rep, lon, lat, code_iris = \
+        line[:-1].split(SEPARATOR)
     street_id = int(street_id)
     locality_id = int(locality_id)
     numero = utils.safe_cast(numero, int, -1)  # fixme
     if numero > 2**16 - 1:
         raise Exception('Error : numero overflows 16bits')
     return (street_id, locality_id, numero, rep,
-            utils.geohash(float(lon), float(lat)),)
+            utils.geohash(float(lon), float(lat)), code_iris)
 
 
 def create_np_table(in_filename, dtype, factory, out_filename, sort=None):
