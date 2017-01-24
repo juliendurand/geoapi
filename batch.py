@@ -79,7 +79,7 @@ def batch(db, in_file, out_file):
                         d = haversine(lon1, lat1, lon2, lat2)
                         x, y = conv_wsg84_to_lambert93(lon2, lat2)
                         zone_dde_a_f, zone_dde_a_c = spatial_join.spatial_join(
-                            x, y, 'ddea', ['quant_f_01', 'quant_cm_1'])
+                            x, y, 'dde_a', ['quant_f_01', 'quant_cm_1'])
                     else:
                         d = 0  # TO CHECK d=0 when unavailable values 32,33
                     if d >= 100000:
