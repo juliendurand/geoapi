@@ -14,21 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import psycopg2
 
-class Trigram():
+conn = psycopg2.connect('dbname=Axa')
+cur = conn.cursor()
 
-    def __init__(self, s):
-        self.s = s
-        n = len(s)
-        self.trigrams = [s[max(0, i):min(n, i + 3)] for i in range(-2, n)]
-        self.trigrams_length = len(self.trigrams)
 
-    def score(self, s):
-        n = len(s)
-        union = 0
-        for i in range(-2, n):
-            x = s[max(0, i):min(n, i + 3)]
-            for c in self.trigrams:
-                if c == x:
-                    union += 1
-        return 2 * union / (n + self.trigrams_length + 4)
+def spatial_join(x, y, table, fields):
+
+    cur.execute("select %s from %s where ST_Contains(geom, ST_GeomFromText('POINT(%s %s)'))" % (', '.join(fields), table, x, y))
+    rows = cur.fetchall()
+    return [int(value) for value in rows[0]]

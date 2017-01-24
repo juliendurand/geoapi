@@ -211,8 +211,8 @@ def search_by_zip_and_city(db, code_post, city, query):
 
 
 if __name__ == '__main__':
-    import main
-    db = main.AddressDatabase()
+    from db import AddressDatabase
+    db = AddressDatabase()
     for i in range(100):
         idx = db.cities_post_index[i]
         try:

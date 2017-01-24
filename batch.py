@@ -3,9 +3,10 @@ import traceback
 
 import pandas as pd
 
-import main
+from db import AddressDatabase
+import spatial_join
 import search
-from utils import haversine
+from utils import haversine, conv_wsg84_to_lambert93
 
 
 def detect_separator(line):
@@ -43,6 +44,18 @@ def batch(db, in_file, out_file):
             'lon',
             'lat',
             'time',
+            'zone_dde_a_f',
+            'zone_dde_a_c',
+            'zone_dde_m_f',
+            'zone_dde_m_c',
+            'zone_bdg_f',
+            'zone_bdg_c',
+            'zone_clim',
+            'zone_vol_f',
+            'zone_vol_c',
+            'zone_catnat',
+            'zone_incattr_f',
+            'zone_incattr_c',
         ]
         out.write(separator.join(headers + new_headers) + '\n')
         for i, line in enumerate(addresses):
@@ -64,6 +77,9 @@ def batch(db, in_file, out_file):
                         lon2 = float(address['lon'])
                         lat2 = float(address['lat'])
                         d = haversine(lon1, lat1, lon2, lat2)
+                        x, y = conv_wsg84_to_lambert93(lon2, lat2)
+                        zone_dde_a_f, zone_dde_a_c = spatial_join.spatial_join(
+                            x, y, 'ddea', ['quant_f_01', 'quant_cm_1'])
                     else:
                         d = 0  # TO CHECK d=0 when unavailable values 32,33
                     if d >= 100000:
@@ -85,6 +101,8 @@ def batch(db, in_file, out_file):
                     address['lon'],
                     address['lat'],
                     address['time'],
+                    zone_dde_a_f,
+                    zone_dde_a_c,
                 ]
             except Exception as e:
                 print(e)
@@ -117,7 +135,7 @@ def save_big_error(filename):
 
 
 if __name__ == '__main__':
-    db = main.AddressDatabase()
+    db = AddressDatabase()
     batch(db, 'data/ADRESSES_PART_GEO_AMABIS_v01072016_out.csv',
           'data/ADRESSES_PART_GEO_AMABIS_v01072016_geocoding_julien.csv')
     batch(db, 'data/adresses_vAMABIS_v28092016_out_v2.csv',

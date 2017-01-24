@@ -26,8 +26,8 @@ def reverse(db, lon, lat):
     h = geohash(lon, lat)
     arg = find_index(h, db.numbers_geohash_index, db.numbers['geohash'])
     k = 100  # k-nearest
-    lo = max(0, arg - k//2)
-    hi = min(db.numbers_geohash_index.size, arg + k//2)
+    lo = max(0, arg - k // 2)
+    hi = min(db.numbers_geohash_index.size, arg + k // 2)
     for hyp in db.numbers_geohash_index[lo:hi]:
         hlon, hlat = reverse_geohash(db.numbers[hyp]['geohash'])
         # Calculate haversine distance to get the real orthonormic distance
@@ -88,9 +88,9 @@ code_insee;country;distance;lon;lat;\n')
                     address['distance'],
                     address['lon'],
                     address['lat'],
-                    ]
+                ]
                 d += address['distance']
-                out.write(";".join(map(str, values))+'\n')
+                out.write(";".join(map(str, values)) + '\n')
                 i += 1
         print(i, ' lines')
-        print(d/i, ' mean distance')
+        print(d / i, ' mean distance')

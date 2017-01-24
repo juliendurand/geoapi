@@ -21,6 +21,7 @@ import os
 import numpy as np
 from unidecode import unidecode
 
+import db
 import utils
 
 SEPARATOR = ','
@@ -33,16 +34,6 @@ city_csv_path = 'index/cities.csv'
 street_csv_path = 'index/streets.csv'
 locality_csv_path = 'index/locality.csv'
 number_csv_path = 'index/numbers.csv'
-
-city_db_path = 'index/cities.dat'
-street_db_path = 'index/streets.dat'
-locality_db_path = 'index/localities.dat'
-number_db_path = 'index/numbers.dat'
-cities_post_index_path = 'index/cities_post_index.dat'
-streets_insee_index_path = 'index/streets_insee_index.dat'
-localities_insee_index_path = 'index/localities_insee_index.dat'
-numbers_locality_index_path = 'index/numbers_locality_index.dat'
-numbers_geohash_index_path = 'index/numbers_geohash_index.dat'
 
 repetition_ref_path = 'index/repetitions.json'
 
@@ -78,37 +69,6 @@ Address = (
     'lat',
     'nom_commune',
 )
-
-city_dtype = np.dtype([
-    ('code_insee', 'a5'),
-    ('code_post', 'a5'),
-    ('nom_commune', 'a45'),
-    ('lon', 'int32'),
-    ('lat', 'int32'),
-])
-
-street_dtype = np.dtype([
-    ('street_id', 'int32'),
-    ('code_insee', 'a5'),
-    ('code_post', 'a5'),
-    ('nom_voie', 'a32'),
-])
-
-# 'lieu-dit' in french
-locality_dtype = np.dtype([
-    ('locality_id', 'int32'),
-    ('code_insee', 'a5'),
-    ('code_post', 'a5'),
-    ('nom_ld', 'a80'),
-])
-
-number_dtype = np.dtype([
-    ('street_id', 'int32'),
-    ('locality_id', 'int32'),
-    ('number', 'int16'),
-    ('rep', 'int8'),
-    ('geohash', 'uint64'),
-])
 
 #
 # Index
@@ -163,9 +123,9 @@ def index_departement(departement, city_file, street_file, locality_file,
                 if len(nom_commune) > 45:
                     raise Exception('Invalid nom_commune : "%s"' % nom_commune)
 
-                x = float(values[11])
+                # x = float(values[11])
 
-                y = float(values[12])
+                # y = float(values[12])
 
                 lon = values[13]
                 if not -180 <= float(lon) <= 180:
@@ -252,7 +212,8 @@ def process_csv_files():
             open(street_csv_path, 'w', encoding='UTF-8') as street_file, \
             open(locality_csv_path, 'w', encoding='UTF-8') as locality_file, \
             open(number_csv_path, 'w', encoding='UTF-8') as number_file, \
-            open(repetition_ref_path, 'w', encoding='UTF-8') as repetition_file:
+            open(repetition_ref_path, 'w', encoding='UTF-8') as \
+            repetition_file:
 
         for departement in departements:
             nb_exceptions += index_departement(departement, city_file,
@@ -328,30 +289,27 @@ def create_np_index(table, column, out_filename):
 
 
 def create_db():
-    cities = create_np_table(city_csv_path, city_dtype, city_factory,
-                             city_db_path, sort='code_insee')
+    cities = create_np_table(city_csv_path, db.city_dtype, city_factory,
+                             db.city_db_path, sort='code_insee')
 
-    streets = create_np_table(street_csv_path, street_dtype, street_factory,
-                              street_db_path)
+    streets = create_np_table(street_csv_path, db.street_dtype, street_factory,
+                              db.street_db_path)
 
-    localities = create_np_table(locality_csv_path, locality_dtype,
-                                 locality_factory, locality_db_path)
+    localities = create_np_table(locality_csv_path, db.locality_dtype,
+                                 locality_factory, db.locality_db_path)
 
-    numbers = create_np_table(number_csv_path, number_dtype, number_factory,
-                              number_db_path, sort='street_id')
+    numbers = create_np_table(number_csv_path, db.number_dtype, number_factory,
+                              db.number_db_path, sort='street_id')
 
-    create_np_index(cities, 'code_post', cities_post_index_path)
-    create_np_index(streets, 'code_insee', streets_insee_index_path)
-    create_np_index(localities, 'code_insee', localities_insee_index_path)
-    create_np_index(numbers, 'locality_id', numbers_locality_index_path)
-    create_np_index(numbers, 'geohash', numbers_geohash_index_path)
-
-
-def load_data(file_path, dtype='int32'):
-    return np.memmap(file_path, dtype=dtype)
+    create_np_index(cities, 'code_post', db.cities_post_index_path)
+    create_np_index(streets, 'code_insee', db.streets_insee_index_path)
+    create_np_index(localities, 'code_insee', db.localities_insee_index_path)
+    create_np_index(numbers, 'locality_id', db.numbers_locality_index_path)
+    create_np_index(numbers, 'geohash', db.numbers_geohash_index_path)
 
 
 def index():
+    print('Indexing')
     if not os.path.exists(index_path):
         os.mkdir(index_path)
 
@@ -359,23 +317,5 @@ def index():
     create_db()
 
 
-class AddressDatabase:
-
-    def __init__(self):
-        # data tables
-        self.cities = load_data(city_db_path, dtype=city_dtype)
-        self.streets = load_data(street_db_path, dtype=street_dtype)
-        self.localities = load_data(locality_db_path, dtype=locality_dtype)
-        self.numbers = load_data(number_db_path, dtype=number_dtype)
-
-        # indices
-        self.cities_post_index = load_data(cities_post_index_path)
-        self.streets_insee_index = load_data(streets_insee_index_path)
-        self.localities_insee_index = load_data(localities_insee_index_path)
-        self.numbers_locality_index = load_data(numbers_locality_index_path)
-        self.numbers_geohash_index = load_data(numbers_geohash_index_path)
-
-
 if __name__ == '__main__':
-    print('indexing')
     index()
