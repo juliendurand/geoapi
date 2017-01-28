@@ -12,6 +12,10 @@ psql -c "create schema public;"
 # import the postgis extension
 psql -c "CREATE EXTENSION postgis;"
 
+# IRIS
+shp2pgsql -c -D -I ./data/Mix_Contours_IRIS_Communes_OSM/Mix_Contours_IRIS_Communes_OSM.shp iris | psql > /dev/null
+psql -c  "CREATE INDEX iris_idx ON iris (depcom);"
+
 # dde_a
 shp2pgsql -c -D -I ./data/zoniers/dde_a/zonier_final_ddea_a2_decoup.shp dde_a | psql > /dev/null
 

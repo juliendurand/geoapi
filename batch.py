@@ -4,9 +4,8 @@ import traceback
 import pandas as pd
 
 from db import AddressDatabase
-import spatial_join
 import search
-from utils import haversine, conv_wsg84_to_lambert93, detect_separator
+from utils import haversine, detect_separator
 
 import time  # TODO remove
 
@@ -51,8 +50,9 @@ def batch(db, in_file, out_file):
             'zone_coastal_flood',
         ]
         out.write(separator.join(headers + new_headers) + '\n')
+
+        start = time.time()
         for i, line in enumerate(addresses):
-            start = time.time()
             line = line[:-1].replace('"', '')
             values = line.split(';')
             try:
@@ -62,8 +62,6 @@ def batch(db, in_file, out_file):
                 query = values[4]
                 address = search.search_by_zip_and_city(db, code_post, city,
                                                         query).to_address()
-                # print('time 1 : ', (time.time() - start) * 1000)
-                start = time.time()
                 d = 100000
 
                 if address['lon'] and address['lat']:
@@ -73,51 +71,6 @@ def batch(db, in_file, out_file):
                         lon2 = float(address['lon'])
                         lat2 = float(address['lat'])
                         d = haversine(lon1, lat1, lon2, lat2)
-                        # print('time 2 : ', (time.time() - start) * 1000)
-                        start = time.time()
-
-                        x, y = conv_wsg84_to_lambert93(lon2, lat2)
-                        # print('time 3 : ', (time.time() - start) * 1000)
-                        start = time.time()
-                        zone_dde_a_f, zone_dde_a_c = spatial_join.spatial_join(
-                            x, y, 'dde_a', ['quant_f_01', 'quant_cm_1'])
-                        # print('time 4 : ', (time.time() - start) * 1000)
-                        start = time.time()
-                        zone_dde_m_f, zone_dde_m_c = spatial_join.spatial_join(
-                            x, y, 'dde_m', ['quant_freq', 'quant_cm_2'])
-                        # print('time 5 : ', (time.time() - start) * 1000)
-                        start = time.time()
-                        zone_bdg_f, zone_bdg_c = spatial_join.spatial_join(
-                            x, y, 'bdg', ['quant_f_01', 'quant_cm_2'])
-                        # print('time 6 : ', (time.time() - start) * 1000)
-                        start = time.time()
-                        zone_clim = spatial_join.spatial_join(x, y, 'clim',
-                                                              ['q95_xws'])
-                        # print('time 7 : ', (time.time() - start) * 1000)
-                        start = time.time()
-                        zone_vol_f = spatial_join.table_join('INSEE_COM', address['code_insee'], 'vol_f', ['zone_vol_f_amelioree'])
-                        # print('time 8 : ', (time.time() - start) * 1000)
-                        start = time.time()
-                        zone_vol_c = spatial_join.table_join('INSEE_COM', address['code_insee'], 'vol_c', ['zone_vol_c_amelioree'])
-                        # print('time 9 : ', (time.time() - start) * 1000)
-                        start = time.time()
-                        zone_incattr_f, zone_incattr_c = spatial_join.table_join('DCOMIRIS', address['code_iris'], 'incattr', ['zonier_inc', 'zonier_i_1']) or (0, 0,)
-                        # print('time 10 : ', (time.time() - start) * 1000)
-                        start = time.time()
-                        zone_sec = spatial_join.spatial_join(x, y, 'sec2',
-                                                             ['alea'],
-                                                             numeric=False)
-                        zone_sec = zone_sec_encoding[zone_sec]
-                        # print('time 11 : ', (time.time() - start) * 1000)
-                        start = time.time()
-                        zone_flood = spatial_join.spatial_join(x, y, 'flood',
-                            ['zone_flood'])
-                        # print('time 12 : ', (time.time() - start) * 1000)
-                        start = time.time()
-                        zone_coastal_flood = spatial_join.spatial_join(x, y,
-                            'coastal_flood', ['scale']) or 0
-                        # print('time 13 : ', (time.time() - start) * 1000)
-
                     else:
                         d = 0  # TO CHECK d=0 when unavailable values 32,33
                     if d >= 100000:
@@ -139,27 +92,17 @@ def batch(db, in_file, out_file):
                     address['lon'],
                     address['lat'],
                     address['time'],
-                    zone_dde_a_f,
-                    zone_dde_a_c,
-                    zone_dde_m_f,
-                    zone_dde_m_c,
-                    zone_bdg_f,
-                    zone_bdg_c,
-                    zone_clim,
-                    zone_vol_f,
-                    zone_vol_c,
-                    zone_incattr_f,
-                    zone_incattr_c,
-                    zone_sec,
-                    zone_flood,
-                    zone_coastal_flood,
                 ]
             except Exception as e:
                 print(e)
                 traceback.print_exc()
             out.write(";".join(map(str, values)) + '\n')
             if (i + 1) % 1000 == 0:
-                print(i + 1, 'th ERROR: ', round(total_error / (i + 1), 2))
+                print(i + 1, 'th line -> time : ',
+                      round(time.time() - start, 3), 's ',
+                      ', Error : ', round(total_error / (i + 1), 2),
+                      ', avg time : ',
+                      round((time.time() - start) * 1000 / (i + 1), 1), 'ms')
         print('FINAL ERROR: ', round(total_error / (i + 1), 2))
 
 
