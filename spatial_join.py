@@ -56,6 +56,55 @@ def table_join(key, id, table, fields, numeric=True):
     return result
 
 
+def get_zones(x, y, code_insee, code_iris):
+    zone_dde_a_f, zone_dde_a_c = spatial_join(
+        x, y, 'dde_a', ['quant_f_01', 'quant_cm_1'])
+
+    zone_dde_m_f, zone_dde_m_c = spatial_join(
+        x, y, 'dde_m', ['quant_freq', 'quant_cm_2'])
+
+    zone_bdg_f, zone_bdg_c = spatial_join(
+        x, y, 'bdg', ['quant_f_01', 'quant_cm_2'])
+
+    zone_clim = spatial_join(x, y, 'clim', ['q95_xws'])
+
+    zone_vol_f = table_join('INSEE_COM', code_insee, 'vol_f',
+                            ['zone_vol_f_amelioree'])
+
+    zone_vol_c = table_join('INSEE_COM', code_insee, 'vol_c',
+                            ['zone_vol_c_amelioree'])
+
+    zone_incattr_f, zone_incattr_c = table_join(
+        'DCOMIRIS', code_iris, 'incattr',
+        ['zonier_inc', 'zonier_i_1']) or (0, 0,)
+
+    zone_sec = spatial_join(x, y, 'sec', ['alea'],
+                            numeric=False)
+    zone_sec = zone_sec_encoding[zone_sec]
+
+    zone_flood = spatial_join(x, y, 'flood', ['zone_flood'])
+
+    zone_coastal_flood = spatial_join(x, y, 'coastal_flood',
+                                      ['scale']) or 0
+
+    return {
+        'zone_dde_a_f': zone_dde_a_f,
+        'zone_dde_a_c': zone_dde_a_c,
+        'zone_dde_m_f': zone_dde_m_f,
+        'zone_dde_m_c': zone_dde_m_c,
+        'zone_bdg_f': zone_bdg_c,
+        'zone_bdg_c': zone_bdg_c,
+        'zone_clim': zone_clim,
+        'zone_vol_f': zone_vol_f,
+        'zone_vol_c': zone_vol_c,
+        'zone_incattr_f': zone_incattr_f,
+        'zone_incattr_c': zone_incattr_c,
+        'zone_sec': zone_sec,
+        'zone_flood': zone_flood,
+        'zone_coastal_flood': zone_coastal_flood,
+    }
+
+
 def batch(in_file, out_file):
     with open(in_file, 'r', encoding='UTF-8') as addresses, \
             open(out_file, 'w', encoding='UTF-8') as out:
@@ -94,53 +143,8 @@ def batch(in_file, out_file):
                     x, y = utils.conv_wsg84_to_lambert93(lon, lat)
                     code_iris = values[iris_index]
                     code_insee = values[insee_index]
-
-                    zone_dde_a_f, zone_dde_a_c = spatial_join(
-                        x, y, 'dde_a', ['quant_f_01', 'quant_cm_1'])
-
-                    zone_dde_m_f, zone_dde_m_c = spatial_join(
-                        x, y, 'dde_m', ['quant_freq', 'quant_cm_2'])
-
-                    zone_bdg_f, zone_bdg_c = spatial_join(
-                        x, y, 'bdg', ['quant_f_01', 'quant_cm_2'])
-
-                    zone_clim = spatial_join(x, y, 'clim', ['q95_xws'])
-
-                    zone_vol_f = table_join('INSEE_COM', code_insee, 'vol_f',
-                                            ['zone_vol_f_amelioree'])
-
-                    zone_vol_c = table_join('INSEE_COM', code_insee, 'vol_c',
-                                            ['zone_vol_c_amelioree'])
-
-                    zone_incattr_f, zone_incattr_c = table_join(
-                        'DCOMIRIS', code_iris, 'incattr',
-                        ['zonier_inc', 'zonier_i_1']) or (0, 0,)
-
-                    zone_sec = spatial_join(x, y, 'sec', ['alea'],
-                                            numeric=False)
-                    zone_sec = zone_sec_encoding[zone_sec]
-
-                    zone_flood = spatial_join(x, y, 'flood', ['zone_flood'])
-
-                    zone_coastal_flood = spatial_join(x, y, 'coastal_flood',
-                                                      ['scale']) or 0
-
-                values += [
-                    zone_dde_a_f,
-                    zone_dde_a_c,
-                    zone_dde_m_f,
-                    zone_dde_m_c,
-                    zone_bdg_f,
-                    zone_bdg_c,
-                    zone_clim,
-                    zone_vol_f,
-                    zone_vol_c,
-                    zone_incattr_f,
-                    zone_incattr_c,
-                    zone_sec,
-                    zone_flood,
-                    zone_coastal_flood,
-                ]
+                    zones = get_zones(x, y, code_insee, code_iris)
+                values += [zones[col] for col in new_headers]
             except Exception:
                 traceback.print_exc()
             out.write(";".join(map(str, values)) + '\n')
@@ -151,7 +155,7 @@ def batch(in_file, out_file):
 
 
 if __name__ == '__main__':
-    batch('data/ADRESSES_PART_GEO_AMABIS_v01072016_geocoding_julien.csv',
+    batch('data/geocoding_1.csv',
           'data/spatial_join_1.csv')
-    batch('data/adresses_vAMABIS_v28092016_out_v2_geocoding_julien.csv',
+    batch('data/geocoding_2.csv',
           'data/spatial_join_2.csv')

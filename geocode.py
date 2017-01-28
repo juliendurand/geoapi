@@ -29,25 +29,13 @@ def batch(db, in_file, out_file):
             'code_iris',
             'country',
             'quality',
-            ' distance',
+            'distance',
             'error',
             'lon',
             'lat',
+            'x',
+            'y',
             'time',
-            'zone_dde_a_f',
-            'zone_dde_a_c',
-            'zone_dde_m_f',
-            'zone_dde_m_c',
-            'zone_bdg_f',
-            'zone_bdg_c',
-            'zone_clim',
-            'zone_vol_f',
-            'zone_vol_c',
-            'zone_incattr_f',
-            'zone_incattr_c',
-            'zone_sec',
-            'zone_flood',
-            'zone_coastal_flood',
         ]
         out.write(separator.join(headers + new_headers) + '\n')
 
@@ -75,26 +63,13 @@ def batch(db, in_file, out_file):
                         d = 0  # TO CHECK d=0 when unavailable values 32,33
                     if d >= 100000:
                         print(i, d)
-                    error = d
-                    total_error += error
-                values += [
-                    address['locality'],
-                    address['number'],
-                    address['street'],
-                    address['code_post'],
-                    address['city'],
-                    address['code_insee'],
-                    address['code_iris'],
-                    address['country'],
-                    address['quality'].value,
-                    str(round(d, 2)),
-                    str(round(error, 6)),
-                    address['lon'],
-                    address['lat'],
-                    address['time'],
-                ]
-            except Exception as e:
-                print(e)
+                    distance = round(d, 2)
+                    address['distance'] = distance
+                    address['error'] = distance
+                    address['quality'] = address['quality'].value
+                    total_error += distance
+                    values += [address[col] for col in new_headers]
+            except Exception:
                 traceback.print_exc()
             out.write(";".join(map(str, values)) + '\n')
             if (i + 1) % 1000 == 0:
@@ -130,8 +105,8 @@ def save_big_error(filename):
 if __name__ == '__main__':
     db = AddressDatabase()
     batch(db, 'data/ADRESSES_PART_GEO_AMABIS_v01072016_out.csv',
-          'data/ADRESSES_PART_GEO_AMABIS_v01072016_geocoding_julien.csv')
+          'data/geocoding_1.csv')
     batch(db, 'data/adresses_vAMABIS_v28092016_out_v2.csv',
-          'data/adresses_vAMABIS_v28092016_out_v2_geocoding_julien.csv')
-    calculate_metrics('data/adresses_vAMABIS_v28092016_out_v2_geocoding_julien.csv')
-    save_big_error('data/adresses_vAMABIS_v28092016_out_v2_geocoding_julien.csv')
+          'data/geocoding_2.csv')
+    calculate_metrics('data/geocoding_2.csv')
+    save_big_error('data/geocoding_2.csv')

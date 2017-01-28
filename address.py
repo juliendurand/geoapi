@@ -91,6 +91,8 @@ class Result():
         r.lon = lon
         r.lat = lat
         x, y = conv_wsg84_to_lambert93(lon, lat)
+        r.x = x
+        r.y = y
         r.code_iris = iris.get_iris(r.code_insee, x=x, y=y)
 
         return r
@@ -117,6 +119,9 @@ class Result():
         r.code_iris = iris.get_iris(code_insee) or ''
         r.lon = int_to_degree(city['lon'])
         r.lat = int_to_degree(city['lat'])
+        x, y = conv_wsg84_to_lambert93(r.lon, r.lat)
+        r.x = x
+        r.y = y
 
         return r
 
@@ -131,6 +136,9 @@ class Result():
         r.code_post = code_post
         r.lon = int_to_degree(city['lon'])
         r.lat = int_to_degree(city['lat'])
+        x, y = conv_wsg84_to_lambert93(r.lon, r.lat)
+        r.x = x
+        r.y = y
 
         return r
 
@@ -160,6 +168,8 @@ class Result():
         self.lon = lon
         self.lat = lat
         x, y = conv_wsg84_to_lambert93(lon, lat)
+        self.x = x
+        self.y = y
         self.code_iris = iris.get_iris(self.code_insee, x, y)
 
     def to_plain_address(self):
