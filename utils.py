@@ -133,6 +133,17 @@ def find_all_from_index(x, index, values, string=False):
         idx += 1
 
 
+def detect_separator(line):
+    separator = None
+    max_nb_tokens = 0
+    for c in ',;#|:':
+        nb_tokens = len(line.split(c))
+        if nb_tokens > max_nb_tokens:
+            separator = c
+            max_nb_tokens = nb_tokens
+    return separator
+
+
 wgs84 = pyproj.Proj(init='EPSG:4326')
 lambert93 = pyproj.Proj(init='EPSG:2154')
 
