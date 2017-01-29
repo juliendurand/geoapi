@@ -18,7 +18,7 @@ import time
 import traceback
 import psycopg2
 
-import utils
+import src.utils as utils
 
 conn = psycopg2.connect('dbname=Axa')
 cur = conn.cursor()

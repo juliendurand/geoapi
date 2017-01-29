@@ -14,10 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-from utils import haversine
-from address import Result
-from search import find_index
-from utils import geohash, reverse_geohash
+from src.utils import haversine
+from src.address import Result
+from src.search import find_index
+from src.utils import geohash, reverse_geohash
 
 
 def reverse(db, lon, lat):

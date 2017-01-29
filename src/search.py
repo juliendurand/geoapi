@@ -21,9 +21,9 @@ import time
 
 from unidecode import unidecode
 
-import address
-from trigram import Trigram
-from utils import reverse_geohash, find, find_index, find_all_from_index
+import src.address as address
+from src.trigram import Trigram
+from src.utils import reverse_geohash, find, find_index, find_all_from_index
 
 
 def best_match(query, items, min_score=0.5):

@@ -1,13 +1,12 @@
 from datetime import datetime
+import time  # TODO remove
 import traceback
 
 import pandas as pd
 
-from db import AddressDatabase
-import search
-from utils import haversine, detect_separator
-
-import time  # TODO remove
+from src.db import AddressDatabase
+import src.search as search
+from src.utils import haversine, detect_separator
 
 
 def batch(db, in_file, out_file):

@@ -1,8 +1,8 @@
 # coding: utf-8
 
-import db
-import spatial_join
-import search
+import src.db as db
+import src.spatial_join as spatial_join
+import src.search as search
 
 
 db_address = db.AddressDatabase()
@@ -17,6 +17,3 @@ def get_risk_audit(address, code_post, city):
     address.merge(zones)
     address.merge(max_zones)
     return address
-
-
-print(get_risk_audit('40 rue de la connardière', '44300', 'Nantes').to_json())

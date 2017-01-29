@@ -17,8 +17,9 @@ limitations under the License.
 from enum import Enum
 import json
 
-import iris
-from utils import int_to_degree, reverse_geohash, find, conv_wsg84_to_lambert93
+import src.iris as iris
+from src.utils import int_to_degree, reverse_geohash, find, \
+    conv_wsg84_to_lambert93
 
 
 class ResultQuality(Enum):

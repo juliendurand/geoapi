@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <p>
+    <h1>AXA - Audit des Risques Habitations</h1>
+    <p>
+    <div class="card">
+        <div class="card-block">
+            <form>
+              <div class="form-group">
+                <label for="AddressInput">Adresse</label>
+                <input type="text" class="form-control" id="AddressInput" placeholder="Adresse">
+              </div>
+              <div class="form-group">
+                <label for="ZipInput">Code Postal</label>
+                <input type="text" class="form-control" id="ZipInput" placeholder="Code Postal">
+              </div>
+              <div class="form-group">
+                <label for="AddressInput">Ville</label>
+                <input type="text" class="form-control" id="CityInput" placeholder="Ville">
+              </div>
+              <button type="submit" class="btn btn-primary">OK</button>
+            </form>
+        </div>
+    </div>
+    <p>
+    <h2>Resultats</h2>
+    <h3>Adresse</h3>
+    {% for s in text %}
+    {{s}}<br>
+    {% endfor %}
+    <p>
+    <h3>Risques</h3>
+    Dégat des eaux appartement : {{zone_dde_a_f}} / {{zone_dde_a_f_max}}<br>
+    Dégat des eaux maison : {{zone_dde_m_f}} / {{zone_dde_m_f_max}}<br>
+    Incendie : {{zone_incattr_f}} / {{zone_incattr_f_max}}<br>
+    Vol : {{zone_vol_f}} / {{zone_vol_f_max}}<br>
+    Bris de Glace : {{zone_bdg_f}} / {{zone_bdg_f_max}}<br>
+    Tempête : {{zone_clim}} / {{zone_clim_max}}<br>
+    Sécheresse : {{zone_sec}} / {{zone_sec_max}}<br>
+    Crue : {{zone_flood}} / {{zone_flood_max}}</br>
+    Crue Cotiêre : {{zone_coastal_flood}} / {{zone_coastal_flood_max}}</br>
+    <p>
+{% endblock content %}

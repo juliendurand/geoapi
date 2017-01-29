@@ -20,7 +20,7 @@ import sys
 import requests
 import zipfile
 
-import main
+from src.index import index
 
 
 BAN_FILE_PATH = 'data/ban.zip'
@@ -72,5 +72,5 @@ if __name__ == '__main__':
         url = sys.argv[1]
         get_ban_file(url)
         unzip(BAN_FILE_PATH, 'data/ban/')
-        main.index()
+        index()
         print("DONE")
