@@ -185,8 +185,11 @@ class Result():
 
     def to_address(self):
         self.text = self.to_plain_address()
-        return self.__dict__
+        return self
+
+    def merge(self, dictionnary):
+        self.__dict__.update(dictionnary)
 
     def to_json(self):
-        return json.dumps(self.to_address(), cls=ResultQualityEncoder,
+        return json.dumps(self.to_address().__dict__, cls=ResultQualityEncoder,
                           sort_keys=True, indent=4)
