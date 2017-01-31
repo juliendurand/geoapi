@@ -5,7 +5,13 @@ import src.audit
 
 
 def index(request):
-    address = src.audit.get_risk_audit('10 av jules ferry', '78500',
-                                       'sartrouville')
-    context = address.__dict__
+    address = request.GET.get('address')
+    zipcode = request.GET.get('zip')
+    city = request.GET.get('city')
+
+    result = src.audit.get_risk_audit(address, zipcode, city)
+    risks = result.__dict__['risks']
+    for risk in risks:
+        risk['cursor'] = int(risk['ratio'] * 200 - 5)
+    context = result.__dict__
     return render(request, 'audit/index.html', context)

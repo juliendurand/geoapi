@@ -98,7 +98,7 @@ def get_zones(x, y, code_insee, code_iris):
         'zone_dde_a_c': zone_dde_a_c,
         'zone_dde_m_f': zone_dde_m_f,
         'zone_dde_m_c': zone_dde_m_c,
-        'zone_bdg_f': zone_bdg_c,
+        'zone_bdg_f': zone_bdg_f,
         'zone_bdg_c': zone_bdg_c,
         'zone_clim': zone_clim,
         'zone_vol_f': zone_vol_f,
