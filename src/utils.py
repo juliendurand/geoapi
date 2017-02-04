@@ -148,8 +148,9 @@ wgs84 = pyproj.Proj(init='EPSG:4326')
 lambert93 = pyproj.Proj(init='EPSG:2154')
 
 
-def conv_lambert93_to_wsg84(lon, lat):
-    return pyproj.transform(lambert93, wgs84, lon, lat)
+def conv_lambert93_to_wsg84(x, y, swap=False):
+    lon, lat = pyproj.transform(lambert93, wgs84, float(x), float(y))
+    return [lat, lon] if swap else [lon, lat]
 
 
 def conv_wsg84_to_lambert93(lon, lat):

@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
+import json
 import time
 import traceback
 import psycopg2
@@ -21,6 +22,7 @@ import psycopg2
 import src.utils as utils
 
 conn = psycopg2.connect('dbname=Axa')
+conn.autocommit = True
 cur = conn.cursor()
 
 zone_sec_encoding = {
@@ -33,9 +35,10 @@ zone_sec_encoding = {
 
 def spatial_join(x, y, table, fields, numeric=True):
     cur.execute("select %s from %s where ST_Contains(geom, "
-                "ST_GeomFromText('POINT(%s %s)'))" %
+                "ST_GeomFromText('POINT(%s %s)')) " %
                 (', '.join(fields), table, float(x), float(y)))
     rows = cur.fetchall()
+    # print("nombre de lignes ", table, " ", len(rows))
     if len(rows) == 0 or len(rows[0]) == 0:
         return ''
     result = [int(value) if numeric else value for value in rows[0]]
@@ -82,7 +85,7 @@ def get_zones(x, y, code_insee, code_iris):
 
     zone_incattr_f, zone_incattr_c = table_join(
         'DCOMIRIS', code_iris, 'incattr',
-        ['zonier_inc', 'zonier_i_1']) or (0, 0,)
+        ['zonier_i_1', 'zonier_inc']) or (0, 0,)
 
     zone_sec = spatial_join(x, y, 'sec', ['alea'],
                             numeric=False)
@@ -138,15 +141,91 @@ def get_max_zones():
     }
 
 
+def get_polygons(table, field, max_value, x, y):
+    cur.execute("select %s, ST_AsGeoJSON(geom)  from %s "
+                "order by geom <-> ST_GeomFromText('POINT(%s %s)') "
+                "limit 5000" %
+                (field, table, float(x), float(y)))
+    # cur.execute("select %s, ST_AsGeoJSON(geom) from %s "
+    #             "where ST_DWithin(geom, "
+    #             "ST_GeomFromText('POINT(%s %s)'), 3000)" %
+    #             (field, table, float(x), float(y)))
+    rows = cur.fetchall()
+    results = []
+    print("nombre polygons for %s : " % table, len(rows))
+    for row in rows:
+        value = float(row[0]) / max_value
+        geometry = row[1]
+        results.append(geojson_to_feature(geometry, values={"risk": value}))
+    results = {
+        "type": "FeatureCollection",
+        "features": results,
+    }
+    return json.dumps(results)
+
+
+def get_iris_polygons(table, field, max_value, join_field, x, y):
+    cur.execute("SELECT %s, ST_AsGeoJSON(geom) "
+                "FROM iris INNER JOIN %s ON iris.DEPCOM = %s.%s "
+                "ORDER BY geom <-> ST_GeomFromText('POINT(%s %s)') "
+                "LIMIT 1000" %
+                (field, table, table, join_field, float(x), float(y)))
+    rows = cur.fetchall()
+    results = []
+    print("nombre de polygons for iris table : ", len(rows))
+    for row in rows:
+        value = float(row[0]) / max_value
+        geometry = row[1]
+        results.append(geojson_to_feature(geometry, values={"risk": value}))
+    results = {
+        "type": "FeatureCollection",
+        "features": results,
+    }
+    return json.dumps(results)
+
+
+def geojson_to_feature(geometry, values):
+    geometry = json.loads(geometry)
+    if geometry['type'] == 'MultiPolygon':
+        points = geometry['coordinates'][0][0]
+        points = [utils.conv_lambert93_to_wsg84(point[0], point[1])
+                  for point in points]
+        geometry['coordinates'][0][0] = points
+    elif geometry['type'] == 'Polygon':
+        points = geometry['coordinates'][0]
+        points = [utils.conv_lambert93_to_wsg84(point[0], point[1])
+                  for point in points]
+        geometry['coordinates'][0] = points
+    else:
+        print('Unknown geometry : ', geometry['type'])
+
+    return {
+        "type": "Feature",
+        "properties": values,
+        "geometry": geometry,
+    }
+
+
+def json_geometry_to_polygon(geometry):
+    geometry = json.loads(geometry)
+    if geometry['type'] == 'MultiPolygon':
+        points = geometry['coordinates'][0][0]
+        points = [utils.conv_lambert93_to_wsg84(point[0], point[1], swap=True)
+                  for point in points]
+        return points
+    else:
+        print('UNKNOW geometry')
+
+
 def batch(in_file, out_file):
     with open(in_file, 'r', encoding='UTF-8') as addresses, \
             open(out_file, 'w', encoding='UTF-8') as out:
         header = addresses.readline()[:-1].replace('"', '')
         separator = utils.detect_separator(header)
-        headers = header.split(separator)
-        x_index = headers.index('XM')
-        y_index = headers.index('YM')
-        iris_index = headers.index('CODIRIS')
+        headers = header.upper().split(separator)
+        x_index = headers.index('X')
+        y_index = headers.index('Y')
+        iris_index = headers.index('CODE_IRIS')
 
         new_headers = [
             'zone_dde_a_f',
@@ -187,7 +266,8 @@ def batch(in_file, out_file):
 
 
 if __name__ == '__main__':
-    print(get_max_zones())
+    pass
+    #print(get_max_zones())
     # batch('data/contracts/contrats_3_geocodes.csv',
     #       'data/results/contracts_zones_march.csv')
     # batch('data/geocoding_1.csv',
