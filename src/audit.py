@@ -1,5 +1,7 @@
 # coding: utf-8
 
+import json
+
 import src.db as db
 import src.spatial_join as spatial_join
 import src.search as search
@@ -135,6 +137,7 @@ def get_risk_audit(address, code_post, city):
                                      x, y),
         },
     ]
+    print(json.dumps([(r['name'], str(r['zone'])+'/'+str(r['zone_max'])) for r in risks]))
     for risk in risks:
         risk['ratio'] = risk['zone'] / risk['zone_max']
     address.merge({'results': True, 'risks': risks})
