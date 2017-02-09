@@ -4,20 +4,25 @@ import traceback
 
 import pandas as pd
 
-from src.db import AddressDatabase
+#from src.db import AddressDatabase
 import src.search as search
 from src.utils import haversine, detect_separator
 
 
 def batch(db, in_file, out_file):
     total_error = 0
-    with open(in_file, 'r', encoding='UTF-8') as addresses, \
+    with open(in_file, 'r', encoding='latin-1') as addresses, \
             open(out_file, 'w', encoding='UTF-8') as out:
         header = addresses.readline()[:-1].replace('"', '')
         separator = detect_separator(header)
         headers = header.split(separator)
-        lon_index = headers.index('LON')
-        lat_index = headers.index('LAT')
+        lon_index = None
+        lat_index = None
+        try:
+            lon_index = headers.index('LON')
+            lat_index = headers.index('LAT')
+        except:
+            print("No column Lon and/or Lat avaible in source file")
         new_headers = [
             'locality',
             'number',
@@ -28,8 +33,8 @@ def batch(db, in_file, out_file):
             'code_iris',
             'country',
             'quality',
-            'distance',
-            'error',
+            #'distance',
+            #'error',
             'lon',
             'lat',
             'x',
@@ -51,7 +56,7 @@ def batch(db, in_file, out_file):
                                                         query).to_address()
                 d = 100000
 
-                if address['lon'] and address['lat']:
+                if address.lon and address.lat and lon_index and lat_index:
                     if values[lon_index] and values[lat_index]:
                         lon1 = float(values[lon_index])
                         lat1 = float(values[lat_index])
@@ -65,9 +70,9 @@ def batch(db, in_file, out_file):
                     distance = round(d, 2)
                     address['distance'] = distance
                     address['error'] = distance
-                    address['quality'] = address['quality'].value
                     total_error += distance
-                    values += [address[col] for col in new_headers]
+                address.quality = address.quality.value
+                values += [getattr(address, col) for col in new_headers]
             except Exception:
                 traceback.print_exc()
             out.write(";".join(map(str, values)) + '\n')
@@ -81,7 +86,7 @@ def batch(db, in_file, out_file):
 
 
 def calculate_metrics(filename):
-    df = pd.read_csv(filename, delimiter=';')
+    df = pd.read_csv(filename, delimiter=';', encoding="utf8")
     metrics = df.groupby('quality')['error'].agg(['count', 'sum', 'mean',
                                                   'std', 'min', 'median',
                                                   'max'])
@@ -102,10 +107,12 @@ def save_big_error(filename):
 
 
 if __name__ == '__main__':
-    db = AddressDatabase()
-    batch(db, 'data/ADRESSES_PART_GEO_AMABIS_v01072016_out.csv',
-          'data/geocoding_1.csv')
-    batch(db, 'data/adresses_vAMABIS_v28092016_out_v2.csv',
-          'data/geocoding_2.csv')
-    calculate_metrics('data/geocoding_2.csv')
-    save_big_error('data/geocoding_2.csv')
+    pass
+    #db = AddressDatabase()
+    #batch('data/Listing Adresse Ptf total.csv', 'Listing Adresse Ptf total auto.csv')
+    #batch(db, 'data/ADRESSES_PART_GEO_AMABIS_v01072016_out.csv',
+    #      'data/geocoding_1.csv')
+    #batch(db, 'data/adresses_vAMABIS_v28092016_out_v2.csv',
+    #      'data/geocoding_2.csv')
+    #calculate_metrics('data/geocoding_2.csv')
+    #save_big_error('data/geocoding_2.csv')

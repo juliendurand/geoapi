@@ -5,8 +5,8 @@ from src.address import Result
 db = AddressDatabase()
 
 code_insee_list = (
-    '33009',
-)
+    '06044','06128'
+,'06157','06148','06105','06161','06027','06610')
 
 streets = set()
 for street in db.streets:

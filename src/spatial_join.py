@@ -223,9 +223,9 @@ def batch(in_file, out_file):
         header = addresses.readline()[:-1].replace('"', '')
         separator = utils.detect_separator(header)
         headers = header.upper().split(separator)
-        x_index = headers.index('X')
-        y_index = headers.index('Y')
-        iris_index = headers.index('CODE_IRIS')
+        x_index = headers.index('XM')
+        y_index = headers.index('YM')
+        iris_index = headers.index('CODIRIS')
 
         new_headers = [
             'zone_dde_a_f',
