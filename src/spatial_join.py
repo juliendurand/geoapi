@@ -95,6 +95,12 @@ def get_zones(x, y, code_insee, code_iris):
 
     zone_coastal_flood = spatial_join(x, y, 'coastal_flood',
                                       ['scale']) or 0
+#Ajout zonier
+
+    zone_clim_int = spatial_join(x, y, 'clim_int', ['quant_pp_2'])
+
+    zone_cat_int = spatial_join(x, y, 'cat_int', ['quant_pp_1'])
+
 
     return {
         'zone_dde_a_f': zone_dde_a_f,
@@ -111,6 +117,11 @@ def get_zones(x, y, code_insee, code_iris):
         'zone_sec': zone_sec,
         'zone_flood': zone_flood,
         'zone_coastal_flood': zone_coastal_flood,
+
+        #Ajout Sébastien
+        'zone_clim_int': zone_clim_int,
+        'zone_cat_int': zone_cat_int,
+
     }
 
 
@@ -138,6 +149,10 @@ def get_max_zones():
         'zone_sec_max': 3,
         'zone_flood_max': spatial_max('flood', 'zone_flood'),
         'zone_coastal_flood_max': spatial_max('coastal_flood', 'scale'),
+
+        #Ajout Sébastien
+        'zone_clim_int_max': spatial_max('clim_int', 'quant_pp_2'),
+        'zone_cat_int_max': spatial_max('cat_int', 'quant_pp_1'),
     }
 
 
@@ -242,6 +257,8 @@ def batch(in_file, out_file):
             'zone_sec',
             'zone_flood',
             'zone_coastal_flood',
+            'zone_clim_int',
+            'zone_cat_int',
         ]
         out.write(separator.join(headers + new_headers) + '\n')
 

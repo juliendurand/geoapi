@@ -25,8 +25,19 @@ shp2pgsql -c -D -I ./data/zoniers/dde_m/zonier_final_ddem_fus.shp dde_m | psql >
 # bdg
 shp2pgsql -c -D -I ./data/zoniers/bdg/zonier_BDG_decoup_total.shp bdg | psql > /dev/null
 
-# clim
+# vent
 shp2pgsql -c -D -I ./data/zoniers/clim/Q95_XWS_polygone_lambert.shp clim | psql > /dev/null
+
+
+
+
+#Zonier sebastien
+# climatique interne
+shp2pgsql -c -D -I ./data/zoniers/others/Climatiques/zonier_final_clim_decoup.shp clim_int | psql > /dev/null
+
+# catnat interne
+shp2pgsql -c -D -I ./data/zoniers/others/catnat/zonier_final_cat_decoup.shp cat_int | psql > /dev/null
+
 
 # vol => csv table
 psql -c "CREATE TABLE vol_f ( \
