@@ -33,10 +33,10 @@ shp2pgsql -c -D -I ./data/zoniers/clim/Q95_XWS_polygone_lambert.shp clim | psql 
 
 #Zonier sebastien
 # climatique interne
-shp2pgsql -c -D -I ./data/zoniers/others/Climatiques/zonier_final_clim_decoup.shp clim_int | psql > /dev/null
+#shp2pgsql -c -D -I ./data/zoniers/others/Climatiques/zonier_final_clim_decoup.shp clim_int | psql > /dev/null
 
 # catnat interne
-shp2pgsql -c -D -I ./data/zoniers/others/catnat/zonier_final_cat_decoup.shp cat_int | psql > /dev/null
+#shp2pgsql -c -D -I ./data/zoniers/others/catnat/zonier_final_cat_decoup.shp cat_int | psql > /dev/null
 
 
 # vol => csv table
