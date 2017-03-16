@@ -19,7 +19,7 @@ source env/bin/activate
 
 # Installation des dépendances
 
-pip -r requirements.txt
+pip install -r requirements.txt
 
 # Téléchargement et indexation de la base BAN
 
