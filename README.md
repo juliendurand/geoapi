@@ -1,4 +1,4 @@
-# geoapi
+# Geoapi
 
 ## Dowload the BAN (Base d'Adresses Nationale)
 
