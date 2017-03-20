@@ -2,7 +2,7 @@
 
 ## Dowload the BAN (Base d'Adresses Nationale)
 
-First download and unzip in /data/ban the open BAN database.
+First, download and unzip in /data/ban the open BAN database (from adresse.gouv.fr).
 
 ## Prerequisites
 
