@@ -15,12 +15,11 @@ limitations under the License.
 """
 
 import os
-import sys
 
 import requests
 import zipfile
 
-from src.index import index
+from index import index
 
 
 BAN_FILE_PATH = 'data/ban.zip'
@@ -68,9 +67,9 @@ def unzip(source_filename, dest_dir):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) > 1:
-        url = sys.argv[1]
-        get_ban_file(url)
-        unzip(BAN_FILE_PATH, 'data/ban/')
-        index()
-        print("DONE")
+    url = 'https://adresse.data.gouv.fr/data/' \
+        'BAN_licence_gratuite_repartage.zip'
+    get_ban_file(url)
+    unzip(BAN_FILE_PATH, 'data/ban/')
+    index()
+    print("DONE")

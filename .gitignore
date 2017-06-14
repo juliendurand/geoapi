@@ -6,3 +6,5 @@
 /env
 /data
 /index
+/venv
+.ipynb_checkpoints/

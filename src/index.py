@@ -21,8 +21,8 @@ import os
 import numpy as np
 from unidecode import unidecode
 
-import src.db as db
-import src.utils as utils
+import db as db
+import utils as utils
 
 SEPARATOR = ','
 

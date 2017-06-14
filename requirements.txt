@@ -1,5 +1,8 @@
 numpy==1.11.2
 pandas==0.19.1
+pyproj==1.9.5.1
 python-dateutil==2.6.0
+pytz==2017.2
 requests==2.12.1
+six==1.10.0
 Unidecode==0.4.19
