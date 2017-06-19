@@ -18,17 +18,29 @@ limitations under the License.
 class Trigram():
 
     def __init__(self, s):
+        # Construction of the list of trigrams of the string s.
+        # First and last letter and couple of letters are included
+        trigram_list = [s[max(0, i):min(len(s), i + 3)]
+                        for i in range(-2, len(s))]
+
+        # Object fields instantiation
         self.s = s
-        n = len(s)
-        self.trigrams = [s[max(0, i):min(n, i + 3)] for i in range(-2, n)]
-        self.trigrams_length = len(self.trigrams)
+        self.trigrams = set(trigram_list)
 
     def score(self, s):
-        n = len(s)
-        union = 0
-        for i in range(-2, n):
-            x = s[max(0, i):min(n, i + 3)]
-            for c in self.trigrams:
-                if c == x:
-                    union += 1
-        return 2 * union / (n + self.trigrams_length + 4)
+        """
+        Computes the socre of similqrity between self.s and s
+
+        Keyword arguments:
+        s -- the string to compare
+        """
+
+        # Construction of the list of trigrams of the string s.
+        # First and last letter and couple of letters are included.
+        trigram_list = [s[max(0, i):min(len(s), i + 3)]
+                        for i in range(-2, len(s))]
+
+        intersection = set(trigram_list) & self.trigrams
+
+        # Computation of the final score.
+        return 2 * len(intersection) / (len(s) + len(self.s) + 4)
