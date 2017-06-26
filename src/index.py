@@ -58,9 +58,11 @@ def create_np_index(table, column, out_filename):
     index_column = np.argsort(table, order=column).astype('int32')
 
     with open(out_filename, 'wb') as out_file:
-        np.save(out_file, index_column)
+        index = np.memmap(out_file, dtype='int32', shape=index_column.shape)
+        index[:] = index_column[:]
+        index.flush()
 
-    print_results(out_filename, table)
+    print_results(out_filename, index)
 
 
 def print_results(filename, table):
