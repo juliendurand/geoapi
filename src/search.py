@@ -21,9 +21,9 @@ import time
 
 from unidecode import unidecode
 
-import src.address as address
-from src.trigram import Trigram
-from src.utils import reverse_geohash, find, find_index, find_all_from_index
+from address import Result
+from trigram import Trigram
+from utils import reverse_geohash, find, find_index, find_all_from_index
 
 
 def best_match(query, items, min_score=0.5):
@@ -121,7 +121,7 @@ def search_number(db, street_id, locality_id, number, max_score):
         result_idx = find_index(locality_id, db.numbers_locality_index,
                                 db.numbers['locality_id'])
         n_idx = db.numbers_locality_index[result_idx]
-        return address.Result.from_plate(db, n_idx, max_score)
+        return Result.from_plate(db, n_idx, max_score)
     elif number:
         n_idx = find(street_id, db.numbers['street_id'])
         lo = None
@@ -131,7 +131,7 @@ def search_number(db, street_id, locality_id, number, max_score):
             if n['street_id'] != street_id:
                 break
             if n['number'] == number:
-                return address.Result.from_plate(db, n_idx, max_score)
+                return Result.from_plate(db, n_idx, max_score)
             if n['number'] < number:
                 lo = n_idx
             elif not hi:
@@ -142,13 +142,11 @@ def search_number(db, street_id, locality_id, number, max_score):
         if lo:
             n = db.numbers[lo]
             lon, lat = reverse_geohash(n['geohash'])
-            return address.Result.from_interpolated(db, number, street_id,
-                                                    lon, lat)
+            return Result.from_interpolated(db, number, street_id, lon, lat)
         else:
             n = db.numbers[hi]
             lon, lat = reverse_geohash(n['geohash'])
-            return address.Result.from_interpolated(db, number, street_id,
-                                                    lon, lat)
+            return Result.from_interpolated(db, number, street_id, lon, lat)
 
     else:
         # middle of the street
@@ -160,7 +158,7 @@ def search_number(db, street_id, locality_id, number, max_score):
                 break
             n_idx_hi += 1
         n_idx = (n_idx_lo + n_idx_hi) // 2
-        return address.Result.from_street(db, n_idx)
+        return Result.from_street(db, n_idx)
 
 
 def search_by_insee(db, code_insee_list, code_post, query):
@@ -180,9 +178,9 @@ def search_by_insee(db, code_insee_list, code_post, query):
 
     if not street_id and not locality_id:
         if len(code_insee_list) == 1:
-            return address.Result.from_city(db, code_insee_list[0])
+            return Result.from_city(db, code_insee_list[0])
         else:
-            return address.Result.from_code_post(db, code_post)
+            return Result.from_code_post(db, code_post)
 
     return search_number(db, street_id, locality_id, number, max_score)
 
@@ -204,8 +202,8 @@ def search_by_zip_and_city(db, code_post, city, query):
         if len(code_insee_list) > 0:
             result = search_by_insee(db, code_insee_list, code_post, query)
         else:
-            result = address.Result.from_error('Could not find the city for ' +
-                                               'this address.')
+            result = Result.from_error('Could not find the city for this '
+                                       'address.')
     result.set_time(time.time() - start)
     return result
 
@@ -213,22 +211,46 @@ def search_by_zip_and_city(db, code_post, city, query):
 if __name__ == '__main__':
     from db import AddressDatabase
     db = AddressDatabase()
-    for i in range(100):
-        idx = db.cities_post_index[i]
-        try:
-            print(idx, db.cities[idx])
-        except:
-            print(idx, ' invalid index')
+    # for i in range(100):
+    #     idx = db.cities_post_index[i]
+    #     try:
+    #         print(idx, db.cities[idx])
+    #     except:
+    #         print(idx, ' invalid index')
 
-#    print(search_by_zip_and_city(db, '33200', 'BORDEAUX', '303 BD DU PRESIDENT WILSON').to_json())
-#    print(search_by_zip_and_city(db, '75013', 'PARIS', '7 PLACE DE RUNGIS').to_json())
-#    print(search_by_zip_and_city(db, '44300', 'Nantes', '40 rue de la cognardière').to_json())
-#    print(search_by_zip_and_city(db, '58400', 'narcy', 'Le boisson').to_json())
-#    print(search_by_zip_and_city(db, '78500', 'sartrouville', '').to_json())
-#    print(search_by_zip_and_city(db, '93152', 'LE BLANC MESNIL CEDEX', '15 AV CHARLES DE GAULLE',).to_json())
-#    print(search_by_zip_and_city(db, '13080', 'LUYNES', '685 CH DE LA COMMANDERIE DE  ST JEAN DE MALTES',).to_json())
-#    print(search_by_zip_and_city(db, '60800', 'TRUMILLY', 'LE PLESSIS CORNEFROY 3 RUE DE BEAURAIN',).to_json())
-#    print(search_by_zip_and_city(db, '75116', 'PARIS', '198 AV VICTOR HUGO',).to_json())
-#    print(search_by_zip_and_city(db, '75015', 'PARIS', '140 RUE SAINT CHARLES',).to_json())
-#    print(search_by_zip_and_city(db, '44150', 'ST HERBLON', '16 RUE DU FORT',).to_json())
-    print(search_by_zip_and_city(db, '59285', 'ARNEKE', '2 ROUTE DE WORMHOUT').to_json())
+    # t1 = time.time()
+    print(search_by_zip_and_city(
+        db, '91120', 'PALAISEAU', '12 BD DES MARECHAUX').to_json())
+    print(search_by_zip_and_city(
+        db, '91120', 'PALAISEAU', '13 BD DES MARECHAUX').to_json())
+    print(search_by_zip_and_city(
+        db, '91120', 'PALAISEAU', '14 BD DES MARECHAUX').to_json())
+    # print(search_by_zip_and_city(
+    #     db, '33000', 'BORDEAUX', '303 BD Du PReSIDenT WILSON').to_json())
+    # print(search_by_zip_and_city(
+    #     db, '44300', 'Nantes', '40 rue de la cognardière').to_json())
+    # print(search_by_zip_and_city(
+    #     db, '58400', 'narcy', 'Le boisson').to_json())
+    # print(search_by_zip_and_city(
+    #     db, '75013', 'PARIS', '7 PLACE DE RUNGIS').to_json())
+    # print(search_by_zip_and_city(
+    #     db, '78500', 'sartrouville', '').to_json())
+    # print(search_by_zip_and_city(
+    #     db, '93152', 'LE BLANC MESNIL CEDEX',
+    #     '15 AV CHARLES DE GAULLE',).to_json())
+    # print(search_by_zip_and_city(
+    #     db, '13080', 'LUYNES',
+    #     '685 CH DE LA COMMANDERIE DE  ST JEAN DE MALTES',).to_json())
+    # print(search_by_zip_and_city(
+    #     db, '60800', 'TRUMILLY',
+    #     'LE PLESSIS CORNEFROY 3 RUE DE BEAURAIN',).to_json())
+    # print(search_by_zip_and_city(
+    #     db, '75116', 'PARIS', '198 AV VICTOR HUGO',).to_json())
+    # print(search_by_zip_and_city(
+    #     db, '75015', 'PARIS', '140 RUE SAINT CHARLES',).to_json())
+    # print(search_by_zip_and_city(
+    #     db, '44150', 'ST HERBLON', '16 RUE DU FORT',).to_json())
+    # print(search_by_zip_and_city(
+    #     db, '59285', 'ARNEKE', '2 ROUTE DE WORMHOUT').to_json())
+    # t2 = time.time()
+    # print(t2 - t1)

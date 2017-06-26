@@ -17,8 +17,9 @@ limitations under the License.
 from enum import Enum
 import json
 
-import src.iris as iris
-from src.utils import int_to_degree, reverse_geohash, find, \
+iris = None
+#import iris as iris
+from utils import int_to_degree, reverse_geohash, find, \
     conv_wsg84_to_lambert93
 
 
@@ -94,7 +95,8 @@ class Result():
         x, y = conv_wsg84_to_lambert93(lon, lat)
         r.x = x
         r.y = y
-        r.code_iris = iris.get_iris(r.code_insee, x=x, y=y)
+        if iris:
+            r.code_iris = iris.get_iris(r.code_insee, x=x, y=y)
 
         return r
 
@@ -117,7 +119,8 @@ class Result():
         r.city = city['nom_commune'].decode('UTF-8')
         r.code_insee = code_insee
         r.code_post = code_post or city['code_post'].decode('UTF-8')
-        r.code_iris = iris.get_iris(code_insee) or ''
+        if iris:
+            r.code_iris = iris.get_iris(code_insee) or ''
         r.lon = int_to_degree(city['lon'])
         r.lat = int_to_degree(city['lat'])
         x, y = conv_wsg84_to_lambert93(r.lon, r.lat)
@@ -171,7 +174,8 @@ class Result():
         x, y = conv_wsg84_to_lambert93(lon, lat)
         self.x = x
         self.y = y
-        self.code_iris = iris.get_iris(self.code_insee, x, y)
+        if iris:
+            self.code_iris = iris.get_iris(self.code_insee, x, y)
 
     def to_plain_address(self):
         address = []
