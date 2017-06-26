@@ -17,10 +17,11 @@ limitations under the License.
 import os
 
 import requests
+import references as ref
 import zipfile
 
-DIR = 'data'
-BAN_DIR = 'ban'
+DIR = ref.DATA_DIR
+BAN_DIR = ref.BAN_SUBDIR
 FILE = 'ban.zip'
 
 FILE_PATH = os.path.join(DIR, FILE)
