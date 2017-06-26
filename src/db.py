@@ -15,16 +15,23 @@ limitations under the License.
 """
 
 import numpy as np
+import references as ref
+import os
 
-city_db_path = 'index/cities.dat'
-street_db_path = 'index/streets.dat'
-locality_db_path = 'index/localities.dat'
-number_db_path = 'index/numbers.dat'
-cities_post_index_path = 'index/cities_post_index.dat'
-streets_insee_index_path = 'index/streets_insee_index.dat'
-localities_insee_index_path = 'index/localities_insee_index.dat'
-numbers_locality_index_path = 'index/numbers_locality_index.dat'
-numbers_geohash_index_path = 'index/numbers_geohash_index.dat'
+CITY_DB_PATH = os.path.join(ref.INDEX_DIR, ref.CITY_DB)
+STREET_DB_PATH = os.path.join(ref.INDEX_DIR, ref.STREET_DB)
+LOCALITIES_DB_PATH = os.path.join(ref.INDEX_DIR, ref.LOCALITIES_DB)
+NUMBER_DB_PATH = os.path.join(ref.INDEX_DIR, ref.NUMBER_DB)
+
+CITIES_POST_INDEX_PATH = os.path.join(ref.INDEX_DIR, ref.CITIES_POST_INDEX)
+STREETS_INSEE_INDEX_PATH = os.path.join(ref.INDEX_DIR, ref.STREETS_INSEE_INDEX)
+LOCALITIES_INSEE_INDEX_PATH = os.path.join(ref.INDEX_DIR,
+                                           ref.LOCALITIES_INSEE_INDEX)
+NUMBERS_LOCALITY_INDEX_PATH = os.path.join(ref.INDEX_DIR,
+                                           ref.NUMBERS_LOCALITY_INDEX)
+NUMBERS_GEOHASH_INDEX_PATH = os.path.join(ref.INDEX_DIR,
+                                          ref.NUMBERS_GEOHASH_INDEX)
+
 
 city_dtype = np.dtype([
     ('code_insee', 'a5'),
@@ -62,21 +69,21 @@ class AddressDatabase:
 
     def __init__(self):
         # data tables
-        self.cities = self.load_data(city_db_path, dtype=city_dtype)
-        self.streets = self.load_data(street_db_path, dtype=street_dtype)
-        self.localities = self.load_data(locality_db_path,
+        self.cities = self.load_data(CITY_DB_PATH, dtype=city_dtype)
+        self.streets = self.load_data(STREET_DB_PATH, dtype=street_dtype)
+        self.localities = self.load_data(LOCALITIES_DB_PATH,
                                          dtype=locality_dtype)
-        self.numbers = self.load_data(number_db_path, dtype=number_dtype)
+        self.numbers = self.load_data(NUMBER_DB_PATH, dtype=number_dtype)
 
         # indices
-        self.cities_post_index = self.load_data(cities_post_index_path)
-        self.streets_insee_index = self.load_data(streets_insee_index_path)
+        self.cities_post_index = self.load_data(CITIES_POST_INDEX_PATH)
+        self.streets_insee_index = self.load_data(STREETS_INSEE_INDEX_PATH)
         self.localities_insee_index = self.load_data(
-            localities_insee_index_path)
+            LOCALITIES_INSEE_INDEX_PATH)
         self.numbers_locality_index = self.load_data(
-            numbers_locality_index_path)
+            NUMBERS_LOCALITY_INDEX_PATH)
         self.numbers_geohash_index = self.load_data(
-            numbers_geohash_index_path)
+            NUMBERS_GEOHASH_INDEX_PATH)
 
     def load_data(self, file_path, dtype='int32'):
         return np.memmap(file_path, dtype=dtype)
