@@ -19,23 +19,35 @@ import os
 import requests
 import zipfile
 
-from index import index
+DIR = 'data'
+BAN_DIR = 'ban'
+FILE = 'ban.zip'
+
+FILE_PATH = os.path.join(DIR, FILE)
+UNZIP_PATH = os.path.join(DIR, BAN_DIR)
+
+URL = 'https://adresse.data.gouv.fr/data/BAN_licence_gratuite_repartage.zip'
 
 
-BAN_FILE_PATH = 'data/ban.zip'
+def get_ban_file():
+    """
+    Downloads FILE from URL and stores it in DIR. This directory is not
+    required to exist before the execution of the method, and if FILE exists,
+    it will be overwritten
+    """
+    print('retrieving ban file : %s' % URL)
 
+    # Certifies the existence of the directory.
+    if not os.path.exists(DIR):
+        os.mkdir(DIR)
 
-def get_ban_file(url):
-    print('retrieving ban file : %s' % url)
+    # Certifies that the directory does not have FILE
+    if os.path.exists(FILE_PATH):
+        os.remove(FILE_PATH)
 
-    if not os.path.exists("data"):
-        os.mkdir("data")
-
-    if os.path.exists(BAN_FILE_PATH):
-        os.remove(BAN_FILE_PATH)
-
-    with open(BAN_FILE_PATH, 'wb') as handle:
-        response = requests.get(url, stream=True)
+    # Downloads the content and stores it at FILE_PATH.
+    with open(FILE_PATH, 'wb') as handle:
+        response = requests.get(URL, stream=True)
 
         if not response.ok:
             raise Exception("Bad Response")
@@ -43,33 +55,31 @@ def get_ban_file(url):
         for block in response.iter_content(1024):
             handle.write(block)
 
+    print('download complete')
 
-def unzip(source_filename, dest_dir):
-    print('unzip ban file %s' % source_filename)
-    if not os.path.exists(dest_dir):
-        os.mkdir(dest_dir)
-    with zipfile.ZipFile(source_filename) as zf:
+
+def unzip():
+    """
+    Uncompress FILE from DIR in the subdirectory BAN_DIR.
+    """
+    print('unzip ban file at : %s' % FILE_PATH)
+
+    # Certifies the existence of the subdirectory.
+    if not os.path.exists(UNZIP_PATH):
+        os.mkdir(UNZIP_PATH)
+
+    # Uncompress each file within FILE
+    with zipfile.ZipFile(FILE_PATH) as zf:
         for member in zf.infolist():
-            # Path traversal defense copied from
-            # http://hg.python.org/cpython/file/tip/Lib/http/server.py#l789
-            words = member.filename.split('/')
-            path = dest_dir
-            for word in words[:-1]:
-                while True:
-                    drive, word = os.path.splitdrive(word)
-                    head, word = os.path.split(word)
-                    if not drive:
-                        break
-                if word in (os.curdir, os.pardir, ''):
-                    continue
-                path = os.path.join(path, word)
-            zf.extract(member, path)
+            zf.extract(member, UNZIP_PATH)
+
+    print('unzip complete')
 
 
 if __name__ == '__main__':
-    url = 'https://adresse.data.gouv.fr/data/' \
-        'BAN_licence_gratuite_repartage.zip'
-    get_ban_file(url)
-    unzip(BAN_FILE_PATH, 'data/ban/')
-    index()
+    print('UPDATING BAN FILE')
+
+    get_ban_file()  # Download
+    unzip()  # Uncompress
+
     print("DONE")
