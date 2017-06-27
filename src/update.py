@@ -5,31 +5,22 @@ This module creates a directory named DIR where it downloads the BASE ADRESSE
 NATIONALE (BAN), an open source data of all the addresses in France offered by
 the french government.
 
-Attributes:
-    DIR (str): Name of the directory where the download will be located.
-    BAN_DIR (str): Name of the directory where the content will be
-        uncompressed.
-    FILE (str): Name of the file downloaded.
-    FILE_PATH (str): Path to find the downloaded content.
-    UNZIP_PATH (str): Path to the unzip data.
-    URL (str): Location of the web data.
-
 """
 
 import os
-
-import requests
-import references as ref
 import zipfile
+import requests
+
+import references as ref
 
 DIR = ref.DATA_DIR
 BAN_DIR = ref.BAN_SUBDIR
-FILE = 'ban.zip'
+FILE = ref.FILE
 
-FILE_PATH = os.path.join(DIR, FILE)
-UNZIP_PATH = os.path.join(DIR, BAN_DIR)
+FILE_PATH = ref.FILE_PATH
+UNZIP_PATH = ref.UNZIP_PATH
 
-URL = 'https://adresse.data.gouv.fr/data/BAN_licence_gratuite_repartage.zip'
+URL = ref.URL
 
 
 def get_ban_file():

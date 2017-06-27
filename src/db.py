@@ -15,54 +15,25 @@ limitations under the License.
 """
 
 import numpy as np
+
+import datatypes as dtp
 import references as ref
-import os
 
-CITY_DB_PATH = os.path.join(ref.INDEX_DIR, ref.CITY_DB)
-STREET_DB_PATH = os.path.join(ref.INDEX_DIR, ref.STREET_DB)
-LOCALITY_DB_PATH = os.path.join(ref.INDEX_DIR, ref.LOCALITY_DB)
-NUMBER_DB_PATH = os.path.join(ref.INDEX_DIR, ref.NUMBER_DB)
+CITY_DB_PATH = ref.CITY_DB_PATH
+STREET_DB_PATH = ref.STREET_DB_PATH
+LOCALITY_DB_PATH = ref.LOCALITY_DB_PATH
+NUMBER_DB_PATH = ref.NUMBER_DB_PATH
 
-CITIES_POST_INDEX_PATH = os.path.join(ref.INDEX_DIR, ref.CITIES_POST_INDEX)
-STREETS_INSEE_INDEX_PATH = os.path.join(ref.INDEX_DIR, ref.STREETS_INSEE_INDEX)
-LOCALITIES_INSEE_INDEX_PATH = os.path.join(ref.INDEX_DIR,
-                                           ref.LOCALITIES_INSEE_INDEX)
-NUMBERS_LOCALITY_INDEX_PATH = os.path.join(ref.INDEX_DIR,
-                                           ref.NUMBERS_LOCALITY_INDEX)
-NUMBERS_GEOHASH_INDEX_PATH = os.path.join(ref.INDEX_DIR,
-                                          ref.NUMBERS_GEOHASH_INDEX)
+CITIES_POST_INDEX_PATH = ref.CITIES_POST_INDEX_PATH
+STREETS_INSEE_INDEX_PATH = ref.STREETS_INSEE_INDEX_PATH
+LOCALITIES_INSEE_INDEX_PATH = ref.LOCALITIES_INSEE_INDEX_PATH
+NUMBERS_LOCALITY_INDEX_PATH = ref.NUMBERS_LOCALITY_INDEX_PATH
+NUMBERS_GEOHASH_INDEX_PATH = ref.NUMBERS_GEOHASH_INDEX_PATH
 
-
-city_dtype = np.dtype([
-    ('code_insee', 'a5'),
-    ('code_post', 'a5'),
-    ('nom_commune', 'a45'),
-    ('lon', 'int32'),
-    ('lat', 'int32'),
-])
-
-street_dtype = np.dtype([
-    ('street_id', 'int32'),
-    ('code_insee', 'a5'),
-    ('code_post', 'a5'),
-    ('nom_voie', 'a32'),
-])
-
-# 'lieu-dit' in french
-locality_dtype = np.dtype([
-    ('locality_id', 'int32'),
-    ('code_insee', 'a5'),
-    ('code_post', 'a5'),
-    ('nom_ld', 'a80'),
-])
-
-number_dtype = np.dtype([
-    ('street_id', 'int32'),
-    ('locality_id', 'int32'),
-    ('number', 'int16'),
-    ('rep', 'int8'),
-    ('geohash', 'uint64'),
-])
+city_dtype = dtp.city_dtype
+street_dtype = dtp.street_dtype
+locality_dtype = dtp.locality_dtype
+number_dtype = dtp.number_dtype
 
 
 class AddressDatabase:
