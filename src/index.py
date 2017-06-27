@@ -18,7 +18,6 @@ import os
 import numpy as np
 
 import db
-import utils
 import intermediate
 import references as ref
 
@@ -102,27 +101,6 @@ def create_index_tables():
 
     ind_by_geohs = index_list(NUMBER_DB_PATH, db.number_dtype, 'geohash')
     create_dat_file(ind_by_geohs, NUMBERS_GEOHASH_INDEX_PATH, 'int32')
-
-
-def create_np_table(in_filename, dtype, out_filename, sort=None):
-    nb_lines = utils.count_file_lines(in_filename)
-    with open(in_filename, 'r+') as in_file,  \
-            open(out_filename, 'wb+') as out_file:
-
-        table = np.memmap(out_file, dtype=dtype, shape=(nb_lines,))
-
-        for i, line in enumerate(in_file):
-            table[i] = tuple(line.strip().split(';'))
-
-        if sort:
-            table.sort(order=sort)
-            print('sorted %s on %s' % (out_filename, sort))
-
-        table.flush()
-
-    print_results(out_filename, table)
-
-    return table
 
 
 def print_results(filename, table):
