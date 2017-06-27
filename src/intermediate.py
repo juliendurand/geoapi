@@ -1,3 +1,30 @@
+# -*- coding: utf-8 -*-
+"""Creation of an intermediary database in csv format.
+
+This module creates an intermediary database in csv format. The goal of this
+intermediate step is to easy the next step: the construction of the binary
+files using tools from the package numpy.
+
+The treatment of all the input and output data is described at the
+textprocessing module.
+
+Attributes:
+    DATA_PATH (str): Path to the csv files containing the information of each
+        departement.
+    CITY_CSV_PATH (str): Path to the new csv file containig the information
+        about the cities (communes) in France.
+    STREET_CSV_PATH (str): Path to the new csv file containing information
+        about the routes in France.
+    LOCALITY_CSV_PATH  (str): Path to the new csv file containing information
+        about the localities (lieu-dit) in France.
+    NUMBER_CSV_PATH (str): Path to the new csv file containig information about
+        the localities in France.
+    REPETITION_JSON_PATH (str): Path to the new json file containing the
+        mapping between integers and 'repetition' strings (the french
+        complement to addresses numbers).
+
+"""
+
 import itertools
 import json
 import os

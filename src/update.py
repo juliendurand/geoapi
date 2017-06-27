@@ -6,18 +6,13 @@ NATIONALE (BAN), an open source data of all the addresses in France offered by
 the french government.
 
 Attributes:
-    DIR (string): name of the directory where the download will be located.
-
-    BAN_DIR (string): name of the directory where the content will be
+    DIR (str): Name of the directory where the download will be located.
+    BAN_DIR (str): Name of the directory where the content will be
         uncompressed.
-
-    FILE (string): name of the file downloaded.
-
-    FILE_PATH (string): path to find the downloaded content.
-
-    UNZIP_PATH (string): path to the unzip data.
-
-    URL (string): location of the web data.
+    FILE (str): Name of the file downloaded.
+    FILE_PATH (str): Path to find the downloaded content.
+    UNZIP_PATH (str): Path to the unzip data.
+    URL (str): Location of the web data.
 
 """
 
@@ -91,7 +86,7 @@ def unzip():
 if __name__ == '__main__':
     print('UPDATING BAN FILE')
 
-    get_ban_file()  # Download
-    unzip()  # Uncompress
+    get_ban_file()
+    unzip()
 
     print("DONE")

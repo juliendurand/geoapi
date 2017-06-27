@@ -4,6 +4,27 @@ import numpy as np
 
 
 class LineProcessor():
+    """Extract the information from a csv line and check if it is valid.
+
+    This class allows the processing of a line from a csv file following the
+    format specified by the BAN documentation. There is one csv file for each
+    departement in France.
+
+    Attributes:
+        ok (boolean): True if the line has the good number of columns.
+        numero (str): Address number.
+        repetition (str): Address number complement.It is used to distinguesh
+            addresses in the same street and with the same number (common in
+            french addresses).
+        code_insee (str): Unique code to each french commune.
+        code_postal (str): Address zip code.
+        nom_ld (str): Address locality (lieu-dit in french).
+        nom_afnor (str): Route name following the postal service standard.
+        commune (str): Commune name (similar to a city division).
+        longitude (str): Longitude from address in string format.
+        latitude (str): Latitude from address in string format.
+
+    """
 
     def __init__(self, line):
         line = line.strip()
@@ -124,6 +145,15 @@ class LineProcessor():
 
 
 class FileProcessor():
+    """Extract the information from a csv file and writes a new ones.
+
+    This class allows the processing of a csv file following the format
+    specified by the BAN documentation. One instance of LineProcessor is used
+    to extract the information of each line that is then used to write four new
+    csv files: cities.csv, locality.csv, numbers.csv and streets.csv; and one
+    new json file: repetitions.json.
+
+    """
 
     def __init__(self, city_file, street_file, locality_file, number_file,
                  street_id_generator, locality_id_generator,
