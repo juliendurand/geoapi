@@ -1,17 +1,24 @@
-"""
-Copyright (C) 2016 Julien Durand
+# -*- coding: utf-8 -*-
+"""Install and update the raw data used by the API
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+This module creates a directory named DIR where it downloads the BASE ADRESSE
+NATIONALE (BAN), an open source data of all the addresses in France offered by
+the french government.
 
-   http://www.apache.org/licenses/LICENSE-2.0
+Attributes:
+    DIR (string): name of the directory where the download will be located.
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+    BAN_DIR (string): name of the directory where the content will be
+        uncompressed.
+
+    FILE (string): name of the file downloaded.
+
+    FILE_PATH (string): path to find the downloaded content.
+
+    UNZIP_PATH (string): path to the unzip data.
+
+    URL (string): location of the web data.
+
 """
 
 import os
@@ -31,10 +38,11 @@ URL = 'https://adresse.data.gouv.fr/data/BAN_licence_gratuite_repartage.zip'
 
 
 def get_ban_file():
-    """
-    Downloads FILE from URL and stores it in DIR. This directory is not
-    required to exist before the execution of the method, and if FILE exists,
-    it will be overwritten
+    """Downloads FILE from URL and stores it in DIR.
+
+    Acces web content from URL and stores it in DIR with the name of FILE.
+    This directory is not required to exist before the execution of the method
+    and if FILE exists, it will be overwritten.
     """
     print('retrieving ban file : %s' % URL)
 
@@ -60,8 +68,11 @@ def get_ban_file():
 
 
 def unzip():
-    """
-    Uncompress FILE from DIR in the subdirectory BAN_DIR.
+    """Unzip FILE from DIR in the subdirectory BAN_DIR.
+
+    Unzip the content of FILE, donwloaded after the execution of get_ban_file,
+    in BAN_DIR. This directory is not required to exist before the execution of
+    the method.
     """
     print('unzip ban file at : %s' % FILE_PATH)
 
