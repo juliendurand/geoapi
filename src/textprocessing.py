@@ -253,6 +253,14 @@ class FileProcessor():
         self.finish()
 
     def process_line(self):
+        """Extract and divide the information of a line.
+
+        This method is the responsible for handling with one single line of a
+        csv file. It firstly extracts the information following the format
+        described by the documentation of the files and then updates each of
+        the class dictionaries with the right data.
+
+        """
 
         numero = self.lineProc.numero
         repetition = self.lineProc.repetition

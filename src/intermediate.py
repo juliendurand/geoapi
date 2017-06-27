@@ -8,24 +8,9 @@ files using tools from the package numpy.
 The treatment of all the input and output data is described at the
 textprocessing module.
 
-Attributes:
-    DATA_PATH (str): Path to the csv files containing the information of each
-        departement.
-    CITY_CSV_PATH (str): Path to the new csv file containig the information
-        about the cities (communes) in France.
-    STREET_CSV_PATH (str): Path to the new csv file containing information
-        about the routes in France.
-    LOCALITY_CSV_PATH  (str): Path to the new csv file containing information
-        about the localities (lieu-dit) in France.
-    NUMBER_CSV_PATH (str): Path to the new csv file containig information about
-        the localities in France.
-    REPETITION_JSON_PATH (str): Path to the new json file containing the
-        mapping between integers and 'repetition' strings (the french
-        complement to addresses numbers).
-
 Todo:
     * Transfer the processing of the repetitions file to the textprocessing
-    module
+    module.
 
 """
 
@@ -35,15 +20,14 @@ import os
 from textprocessing import FileProcessor
 
 import references as ref
-from update import UNZIP_PATH
 
-DATA_PATH = UNZIP_PATH
+DATA_PATH = ref.UNZIP_PATH
 
-CITY_CSV_PATH = os.path.join(ref.INTERMEDIATE_DIR, ref.CITY_CSV)
-STREET_CSV_PATH = os.path.join(ref.INTERMEDIATE_DIR, ref.STREET_CSV)
-LOCALITY_CSV_PATH = os.path.join(ref.INTERMEDIATE_DIR, ref.LOCALITY_CSV)
-NUMBER_CSV_PATH = os.path.join(ref.INTERMEDIATE_DIR, ref.NUMBER_CSV)
-REPETITION_JSON_PATH = os.path.join(ref.INTERMEDIATE_DIR, ref.REPETITION_JSON)
+CITY_CSV_PATH = ref.CITY_CSV_PATH
+STREET_CSV_PATH = ref.STREET_CSV_PATH
+LOCALITY_CSV_PATH = ref.LOCALITY_CSV_PATH
+NUMBER_CSV_PATH = ref.NUMBER_CSV_PATH
+REPETITION_JSON_PATH = ref.REPETITION_JSON_PATH
 
 
 def process_csv_files():
@@ -86,7 +70,7 @@ def process_csv_files():
 
 
 if __name__ == '__main__':
-    print('CREATING INTERMEDIATE CSV DATABASE')
+    print('CREATING INTERMEDIARY CSV DATABASE')
 
     process_csv_files()
 
