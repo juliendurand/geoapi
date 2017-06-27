@@ -23,13 +23,16 @@ Attributes:
         mapping between integers and 'repetition' strings (the french
         complement to addresses numbers).
 
+Todo:
+    * Transfer the processing of the repetitions file to the textprocessing
+    module
+
 """
 
-import itertools
 import json
 import os
 
-from textprocessing import LineProcessor, FileProcessor
+from textprocessing import FileProcessor
 
 import references as ref
 from update import UNZIP_PATH
@@ -43,31 +46,14 @@ NUMBER_CSV_PATH = os.path.join(ref.INTERMEDIATE_DIR, ref.NUMBER_CSV)
 REPETITION_JSON_PATH = os.path.join(ref.INTERMEDIATE_DIR, ref.REPETITION_JSON)
 
 
-def process_departement(file_path, processed_file):
-    print('Processing : %s' % file_path)
-
-    exceptions = 0
-
-    in_file = open(file_path, 'r', encoding='UTF-8')
-    next(in_file, None)  # skip header (first line)
-
-    for line in in_file:
-        processed_line = LineProcessor(line)
-
-        if not processed_line.test():
-            exceptions += 1
-            continue
-
-        processed_file.update(processed_line)
-
-    processed_file.finish(exceptions)
-
-
 def process_csv_files():
-    repetitions = dict()
-    street_id_generator = itertools.count()
-    locality_id_generator = itertools.count()
-    repetition_id_generator = itertools.count()
+    """Manage the process of all the csv files and the writing of the new ones.
+
+    This method opens the csv files where the intermediary database will be
+    written and menages the processing of each file which is done by an
+    instance of FileProcessor from the module textprocessing.
+
+    """
 
     if not os.path.exists(ref.INTERMEDIATE_DIR):
         os.mkdir(ref.INTERMEDIATE_DIR)
@@ -79,19 +65,20 @@ def process_csv_files():
             open(REPETITION_JSON_PATH, 'w', encoding='UTF-8') as \
             repetition_file:
 
+        fileProc = FileProcessor(city_file, street_file, locality_file,
+                                 number_file)
+
         for (dirname, dirs, files) in os.walk(DATA_PATH):
             for filename in files:
                 if filename.endswith('.csv'):
                     file_path = os.path.join(dirname, filename)
 
-                    processed_file = FileProcessor(city_file, street_file,
-                                                   locality_file, number_file,
-                                                   street_id_generator,
-                                                   locality_id_generator,
-                                                   repetition_id_generator,
-                                                   repetitions)
-                    process_departement(file_path, processed_file)
+                    print('Processing : %s' % file_path)
 
+                    in_file = open(file_path, 'r', encoding='UTF-8')
+                    fileProc.process(in_file)
+
+        repetitions = fileProc.repetitions
         indexed_repetition = {int(v[0]): k for k, v in repetitions.items()}
         indexed_repetition = sorted(indexed_repetition)
         repetition_file.write(json.dumps(indexed_repetition))
