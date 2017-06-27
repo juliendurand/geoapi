@@ -16,11 +16,9 @@ limitations under the License.
 
 from enum import Enum
 import json
+from utils import int_to_degree, reverse_geohash, find, conv_wsg84_to_lambert93
 
 iris = None
-#import iris as iris
-from utils import int_to_degree, reverse_geohash, find, \
-    conv_wsg84_to_lambert93
 
 
 class ResultQuality(Enum):
@@ -182,9 +180,9 @@ class Result():
         if self.locality:
             address.append(self.locality)
         elif self.street:
-            address.append(str(self.number) + ' ' + self.street)
-        address.append(self.code_post + ' ' + self.city)
-        address.append(self.country)
+            address.append(str(self.number) + ' ' + str(self.street))
+        address.append(str(self.code_post) + ' ' + str(self.city))
+        address.append(str(self.country))
         map(str.strip, address)
         return address
 

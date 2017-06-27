@@ -5,7 +5,7 @@ INDEX_DIR = 'database_dat'
 
 CITY_DB = 'cities.dat'
 STREET_DB = 'streets.dat'
-LOCALITIES_DB = 'localities.dat'
+LOCALITY_DB = 'localities.dat'
 NUMBER_DB = 'number.dat'
 
 CITY_CSV = 'cities.csv'

@@ -20,7 +20,7 @@ import os
 
 CITY_DB_PATH = os.path.join(ref.INDEX_DIR, ref.CITY_DB)
 STREET_DB_PATH = os.path.join(ref.INDEX_DIR, ref.STREET_DB)
-LOCALITIES_DB_PATH = os.path.join(ref.INDEX_DIR, ref.LOCALITIES_DB)
+LOCALITY_DB_PATH = os.path.join(ref.INDEX_DIR, ref.LOCALITY_DB)
 NUMBER_DB_PATH = os.path.join(ref.INDEX_DIR, ref.NUMBER_DB)
 
 CITIES_POST_INDEX_PATH = os.path.join(ref.INDEX_DIR, ref.CITIES_POST_INDEX)
@@ -71,7 +71,7 @@ class AddressDatabase:
         # data tables
         self.cities = self.load_data(CITY_DB_PATH, dtype=city_dtype)
         self.streets = self.load_data(STREET_DB_PATH, dtype=street_dtype)
-        self.localities = self.load_data(LOCALITIES_DB_PATH,
+        self.localities = self.load_data(LOCALITY_DB_PATH,
                                          dtype=locality_dtype)
         self.numbers = self.load_data(NUMBER_DB_PATH, dtype=number_dtype)
 
